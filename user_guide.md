@@ -64,5 +64,3 @@ The main directories in NestedAE are code and datasets.<br>
 * To replicate the results in the paper follow the steps below :
     - Change the "inputs_dir" variable to "inputs_perov_data" to run NestedAE on the multiscale perovskite dataset or to "inputs_syn_data" to run NestedAE on the synthetic dataset in go.sh script.
     - To generate the plots in the paper head over to the analysis.ipynb file.
-
-Automatically generate manuel from docstrings in code : https://doxygen.nl
