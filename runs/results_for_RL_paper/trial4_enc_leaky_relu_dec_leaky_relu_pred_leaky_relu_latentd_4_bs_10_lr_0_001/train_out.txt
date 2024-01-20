@@ -1,0 +1,91 @@
+ --> User provided command line run_dir argument : ../runs/results_for_RL_paper
+ --> User provided command line ae argument : 1
+ --> Setting global random seed 0.
+ --> Running on cpu.
+ --> Number of threads : 10
+ --> Number of interop threads : 10
+ --> PyTorch configurations
+
+
+ --> Submodule encoder layers :
+ModuleList(
+  (0): Linear(in_features=4, out_features=4, bias=True)
+  (1): LeakyReLU(negative_slope=0.5)
+)
+
+
+ --> Submodule predictor layers :
+ModuleList(
+  (0): Linear(in_features=4, out_features=1, bias=True)
+  (1): LeakyReLU(negative_slope=0.5)
+)
+
+
+ --> Submodule decoder layers :
+ModuleList(
+  (0): Linear(in_features=4, out_features=4, bias=True)
+  (1): LeakyReLU(negative_slope=0.5)
+)
+ --> Model Compilation step complete.
+┏━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━┓
+┃   ┃ Name       ┃ Type       ┃ Params ┃
+┡━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━┩
+│ 0 │ submodules │ ModuleDict │     45 │
+└───┴────────────┴────────────┴────────┘
+Trainable params: 45                                                            
+Non-trainable params: 0                                                         
+Total params: 45                                                                
+Total estimated model params size (MB): 0                                       
+ --> Example Input : 
+{'f1tof4': tensor([-1.1743, -2.9995,  0.8002,  0.2705]), 'f5': tensor([-0.7479])}
+
+
+--> Model Trace : 
+
+
+ ---------------------------------- 
+module_name:encoder
+input id:['f1tof4']
+input to submodule :
+tensor([-1.1743, -2.9995,  0.8002,  0.2705])
+output id:encoder
+output from submodule :
+tensor([-1.2469,  0.2992,  1.2302,  1.1515], grad_fn=<LeakyReluBackward0>)
+Submodule output dictionary :
+{'encoder': tensor([-1.2469,  0.2992,  1.2302,  1.1515], grad_fn=<LeakyReluBackward0>)}
+ ---------------------------------- 
+
+
+
+
+ ---------------------------------- 
+module_name:predictor
+input id:['encoder']
+input to submodule :
+tensor([-1.2469,  0.2992,  1.2302,  1.1515], grad_fn=<CatBackward0>)
+output id:predictor
+output from submodule :
+tensor([-0.7070], grad_fn=<LeakyReluBackward0>)
+Submodule output dictionary :
+{'encoder': tensor([-1.2469,  0.2992,  1.2302,  1.1515], grad_fn=<LeakyReluBackward0>),
+ 'predictor': tensor([-0.7070], grad_fn=<LeakyReluBackward0>)}
+ ---------------------------------- 
+
+
+
+
+ ---------------------------------- 
+module_name:decoder
+input id:['encoder']
+input to submodule :
+tensor([-1.2469,  0.2992,  1.2302,  1.1515], grad_fn=<CatBackward0>)
+output id:decoder
+output from submodule :
+tensor([ 1.0117, -0.6175,  0.4693, -0.3165], grad_fn=<LeakyReluBackward0>)
+Submodule output dictionary :
+{'decoder': tensor([ 1.0117, -0.6175,  0.4693, -0.3165], grad_fn=<LeakyReluBackward0>),
+ 'encoder': tensor([-1.2469,  0.2992,  1.2302,  1.1515], grad_fn=<LeakyReluBackward0>),
+ 'predictor': tensor([-0.7070], grad_fn=<LeakyReluBackward0>)}
+ ---------------------------------- 
+
+
