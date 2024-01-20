@@ -90,20 +90,30 @@ class VanillaAE(pl.LightningModule):
                 # Inner loop iterates over the layers in each submodule
                 for j, num_nodes in enumerate(num_nodes_per_layer):
 
-                    # The first layer receives inputs from a submodule or dataset or both.
-                    if j == 0:
-                        # Calculate the input dimensions to first layer based on all inputs connected to that layer
-                        input_dim = get_module_input_dim(submodule_dict['connect_to'], \
-                                                         self.nn_params_dict, \
-                                                         self.datasets.variable_shapes)
-                    else:
-                        # Get the input dimensions of every subsequent layer from out dims of previous layer 
-                        input_dim = num_nodes_per_layer[j - 1]
-
-                    # Future Support
+                    # If layer type is linear then get input dimension
                     if layer_type_list[j] == 'linear':
+                        # The first layer receives inputs from a submodule or dataset or both.
+                        if j == 0:
+                            # Calculate the input dimensions to first layer based on all inputs connected to that layer
+                            input_dim = get_module_input_dim(submodule_dict['connect_to'], \
+                                                            self.nn_params_dict, \
+                                                            self.datasets.variable_shapes)
+                        else:
+                            # Get the input dimensions of every subsequent layer from out dims of previous layer 
+                            input_dim = num_nodes_per_layer[j - 1]
+
                         layer_list.append(nn.Linear(in_features=input_dim,
                                                     out_features=num_nodes,
+                                                    bias=True))
+                    elif layer_type_list[j] == 'conv2d':
+                        
+                        layer_list.append(nn.Conv2d(in_channels=in_channels,
+                                                    out_channels=out_channels,
+                                                    kernel_size=kernel_size,
+                                                    stride=stride,
+                                                    padding=padding,
+                                                    dilation=dilation,
+                                                    groups=groups,
                                                     bias=True))
                     else:
                         raise ValueError(' --> Unknown layer type.')

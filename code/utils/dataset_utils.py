@@ -318,7 +318,7 @@ def create_preprocessed_datasets(nn_save_dir, nn_dataset_dict, global_seed, test
         preview_file_name = 'dataset_preview.csv'
         np.savetxt(dataset_save_dir + '/' + preview_file_name, samples_preview, delimiter=',')
 
-        use_kfold_cross_validator = True
+        use_kfold_cross_validator = False
 
         if use_kfold_cross_validator:
             ae_dataset = CreateDataset(name=dataset_name,

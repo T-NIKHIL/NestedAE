@@ -51,79 +51,98 @@ list_of_nn_params_dict=[
 
        {
               #'model_type':'encoder_l_3_tanh_l1_1em2_decoder_None_no_l1_corr_coefs_seed_0_lr_1em2_bs_180_mae',
-              'model_type':'encoder_FAddNoise_ae1',
+              'model_type':'trial4_enc_leaky_relu_dec_leaky_relu_pred_leaky_relu_latentd_4_bs_10_lr_0_001',
 
 
               'submodules':{
 
                      'encoder':{
 
-                            'connect_to':'f1tof4',
-                            'num_nodes_per_layer':[4,3,2],
-                            'layer_type':['linear','linear','linear'],
-                            'layer_activation':['tanh','tanh',None],
-                            'layer_kernel_init':['xavier_uniform','xavier_uniform','xavier_uniform'],
-                            'layer_kernel_init_gain':[1,1,1],
-                            'layer_bias_init':['zeros','zeros','zeros'],
-                            'layer_weight_reg':{'l1':0.001, 'l2':0},
+                            'connect_to':['f1tof4'],
+                            'num_nodes_per_layer':[4],
+                            'layer_type':['linear'],
+                            'layer_activation':['leaky_relu'],
+                            'layer_kernel_init':['xavier_uniform'],
+                            'layer_kernel_init_gain':[1],
+                            'layer_bias_init':['zeros'],
+                            'layer_weight_reg':{'l1':0, 'l2':0.0001},
                             'save_output_on_train_end':True,
                             'save_params':True
                      },
 
+                     'predictor':{
+                            
+                            'connect_to':['encoder'],
+                            'num_nodes_per_layer':[1],
+                            'layer_type':['linear'],
+                            'layer_activation':['leaky_relu'],
+                            'layer_kernel_init':['xavier_uniform'],
+                            'layer_kernel_init_gain':[1],
+                            'layer_bias_init':['zeros'],
+                            'layer_weight_reg':{'l1':0, 'l2':0.0001},
+                            'save_output_on_train_end':True,
+                            'save_params':True,
+                            'loss':{'type':'mae',
+                                    'wt':1,
+                                    'target':'f5'}
+
+                     },
+
                      'decoder':{
 
-                            'connect_to':'encoder',
-                            'num_nodes_per_layer':[2,3,4],
-                            'layer_type':['linear','linear','linear'],
-                            'layer_activation':[None,'tanh','tanh'],
-                            'layer_kernel_init':['xavier_uniform','xavier_uniform','xavier_uniform'],
-                            'layer_kernel_init_gain':[1,1,1],
-                            'layer_bias_init':['zeros','zeros','zeros'],
-                            'layer_weight_reg':{'l1':0.001, 'l2':0},
+                            'connect_to':['encoder'],
+                            'num_nodes_per_layer':[4],
+                            'layer_type':['linear'],
+                            'layer_activation':['leaky_relu'],
+                            'layer_kernel_init':['xavier_uniform'],
+                            'layer_kernel_init_gain':[1],
+                            'layer_bias_init':['zeros'],
+                            'layer_weight_reg':{'l1':0, 'l2':0.0001},
                             'loss':{'type':'mae',
                                     'wt':1,
                                     'target':'f1tof4'},
-                     }
-
-              }
-
-       },
-
-       {
-              'model_type':'encoder_FAddNoise_ae2',
-
-              'submodules':{
-
-                     'encoder':{
-
-                            'connect_to':['f5tof13andae1l'],
-                            'num_nodes_per_layer':[11,8,6,5],
-                            'layer_type':['linear','linear','linear','linear'],
-                            'layer_activation':['tanh','tanh','tanh',None],
-                            'layer_kernel_init':['xavier_uniform','xavier_uniform','xavier_uniform','xavier_uniform'],
-                            'layer_kernel_init_gain':[1,1,1,1],
-                            'layer_bias_init':['zeros','zeros','zeros','zeros'],
-                            'layer_weight_reg':{'l1':0.001, 'l2':0},
-                            'save_output_on_train_end':True,
                             'save_params':True
-                     },
-
-                     'decoder':{
-
-                            'connect_to':'encoder',
-                            'num_nodes_per_layer':[5,6,8,11],
-                            'layer_type':['linear','linear','linear','linear'],
-                            'layer_activation':[None,'tanh','tanh','tanh'],
-                            'layer_kernel_init':['xavier_uniform','xavier_uniform','xavier_uniform','xavier_uniform'],
-                            'layer_kernel_init_gain':[1,1,1,1],
-                            'layer_bias_init':['zeros','zeros','zeros','zeros'],
-                            'layer_weight_reg':{'l1':0.001, 'l2':0},
-                            'loss':{'type':'mae',
-                                    'wt':1,
-                                    'target':'f5tof13andae1l'},
                      }
 
               }
+
        }
+
+       # {
+       #        'model_type':'encoder_FAddNoise_ae2',
+
+       #        'submodules':{
+
+       #               'encoder':{
+
+       #                      'connect_to':['f5tof13andae1l'],
+       #                      'num_nodes_per_layer':[11,8,6,5],
+       #                      'layer_type':['linear','linear','linear','linear'],
+       #                      'layer_activation':['tanh','tanh','tanh',None],
+       #                      'layer_kernel_init':['xavier_uniform','xavier_uniform','xavier_uniform','xavier_uniform'],
+       #                      'layer_kernel_init_gain':[1,1,1,1],
+       #                      'layer_bias_init':['zeros','zeros','zeros','zeros'],
+       #                      'layer_weight_reg':{'l1':0.001, 'l2':0},
+       #                      'save_output_on_train_end':True,
+       #                      'save_params':True
+       #               },
+
+       #               'decoder':{
+
+       #                      'connect_to':'encoder',
+       #                      'num_nodes_per_layer':[5,6,8,11],
+       #                      'layer_type':['linear','linear','linear','linear'],
+       #                      'layer_activation':[None,'tanh','tanh','tanh'],
+       #                      'layer_kernel_init':['xavier_uniform','xavier_uniform','xavier_uniform','xavier_uniform'],
+       #                      'layer_kernel_init_gain':[1,1,1,1],
+       #                      'layer_bias_init':['zeros','zeros','zeros','zeros'],
+       #                      'layer_weight_reg':{'l1':0.001, 'l2':0},
+       #                      'loss':{'type':'mae',
+       #                              'wt':1,
+       #                              'target':'f5tof13andae1l'},
+       #               }
+
+       #        }
+       # }
 
 ]

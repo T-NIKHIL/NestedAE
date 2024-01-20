@@ -5,9 +5,9 @@
 # <-- USER START -->
 
 ## Specify folder to look at for the input files
-inputs_dir=inputs_perov_data
+inputs_dir=inputs_syn_data
 ## Specify folder to save the NestedAE outputs to
-run_dir=test_nt
+run_dir=results_for_RL_paper
 ## Which Autoencoder(ae) to use for training or inference
 ae=1
 ## Specify mode of operation. train or predict
@@ -16,7 +16,7 @@ mode=train
 accelerator=cpu
 ## Name of submodule from which predictions are required.
 ## Use when selecting 'predict' mode. Ignored in 'train' mode.
-submodule=bg_pred
+submodule=predictor
 
 # <-- USER END -->
 
