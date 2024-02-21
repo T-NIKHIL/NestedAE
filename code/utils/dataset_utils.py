@@ -333,14 +333,12 @@ def create_preprocessed_datasets(nn_save_dir, nn_dataset_dict, global_seed, test
 
             n_splits = 5
             cross_val_type = 'kfold'
-            class_col = 'bg_class'
 
             train_tensor_datasets, \
             train_tensor_datasets_var_shapes, \
             val_tensor_datasets, \
             val_tensor_datasets_var_shapes = create_kfold_datasets(cross_val_type, dataset,
-                                                                   n_splits, global_seed,
-                                                                   class_col=class_col)
+                                                                   n_splits, global_seed)
 
             # Preview each train k-fold dataset
             for i, train_tensor_dataset in enumerate(train_tensor_datasets):
@@ -435,7 +433,7 @@ def create_preprocessed_datasets(nn_save_dir, nn_dataset_dict, global_seed, test
     else:
         raise ValueError(f'Invalid mode specified {mode}.')
     
-def create_kfold_datasets(cross_val_type, dataset, n_splits, global_seed, class_col=None):
+def create_kfold_datasets(cross_val_type, dataset, n_splits, global_seed):
     """ Creates kfold datasets from the dataset provided."""
 
     # Create a list the will store the kfold datasets

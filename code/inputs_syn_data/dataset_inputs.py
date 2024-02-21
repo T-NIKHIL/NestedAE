@@ -12,15 +12,31 @@ list_of_nn_datasets_dict=[
                     'X1':{
                             'skiprows':1, # Skips the header row
                             'header':None,
-                            'path':'../datasets/synthetic_dataset/synthetic_data_gridSamples_200_sumf5.csv',
-                            'variables':{'f1tof4':{'cols':[8,9,10,11], 'preprocess':'std'},
+                            'path':'../datasets/synthetic_dataset/synthetic_data_gridSamples_200.csv',
+                            'variables':{'x1tox8':{'cols':[0,1,2,3,4,5,6,7], 'preprocess':'std'},
+                                         'f5':{'cols':[12], 'preprocess':'std'}}
+                        },
+        }
+
+    },
+
+    {
+
+        'train':{
+            
+                    'X2':{
+                            'skiprows':1, # Skips the header row
+                            'header':None,
+                            'path':'../datasets/synthetic_dataset/synthetic_data_gridSamples_200_with_ae1_latents_concat.csv',
+                            'variables':{'f1tof4_w_ae1_latent':{'cols':[8,9,10,11,13], 'preprocess':'std'},
                                          'f5':{'cols':[12], 'preprocess':'std'}}
 
                         },
+        }
+
+    },
 
 
-    }
-    }
 
     # {
 

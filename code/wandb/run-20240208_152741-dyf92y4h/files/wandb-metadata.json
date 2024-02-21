@@ -1,0 +1,44 @@
+{
+    "os": "macOS-14.2.1-arm64-arm-64bit",
+    "python": "3.9.18",
+    "heartbeatAt": "2024-02-08T20:27:42.702757",
+    "startedAt": "2024-02-08T20:27:41.728594",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--run_dir",
+        "results_for_RL_paper",
+        "--ae",
+        "2",
+        "--accelerator",
+        "cpu"
+    ],
+    "state": "running",
+    "program": "/Users/nikhilthota/Desktop/lab/projects/SPIRAL/codes_and_datasets/T-NIKHIL/NestedAE/code/train.py",
+    "codePathLocal": "train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "git@github.com:T-NIKHIL/NestedAE.git",
+        "commit": null
+    },
+    "email": "nthota2@jh.edu",
+    "root": "/Users/nikhilthota/Desktop/lab/projects/SPIRAL/codes_and_datasets/T-NIKHIL/NestedAE/code",
+    "host": "Nikhils-MacBook-Pro.local",
+    "username": "nikhilthota",
+    "executable": "/Users/nikhilthota/miniconda3/envs/nestedae/bin/python3",
+    "cpu_count": 10,
+    "cpu_count_logical": 10,
+    "disk": {
+        "/": {
+            "total": 460.4317207336426,
+            "used": 9.426414489746094
+        }
+    },
+    "gpuapple": {
+        "type": "arm",
+        "vendor": "Apple"
+    },
+    "memory": {
+        "total": 16.0
+    }
+}

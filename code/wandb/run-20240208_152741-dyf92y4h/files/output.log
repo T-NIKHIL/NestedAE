@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/nikhilthota/Desktop/lab/projects/SPIRAL/codes_and_datasets/T-NIKHIL/NestedAE/code/train.py", line 169, in <module>
+    train()
+  File "/Users/nikhilthota/miniconda3/envs/nestedae/lib/python3.9/site-packages/click/core.py", line 1157, in __call__
+    return self.main(*args, **kwargs)
+  File "/Users/nikhilthota/miniconda3/envs/nestedae/lib/python3.9/site-packages/click/core.py", line 1078, in main
+    rv = self.invoke(ctx)
+  File "/Users/nikhilthota/miniconda3/envs/nestedae/lib/python3.9/site-packages/click/core.py", line 1434, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/Users/nikhilthota/miniconda3/envs/nestedae/lib/python3.9/site-packages/click/core.py", line 783, in invoke
+    return __callback(*args, **kwargs)
+  File "/Users/nikhilthota/Desktop/lab/projects/SPIRAL/codes_and_datasets/T-NIKHIL/NestedAE/code/train.py", line 123, in train
+    loggers.append(csv_logger, wandb_logger)
+TypeError: list.append() takes exactly one argument (2 given)

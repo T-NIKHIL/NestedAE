@@ -1,0 +1,229 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    python_version: 3.9.18
+    cli_version: 0.16.3
+    framework: lightning
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1707424897.657485
+    t:
+      1:
+      - 1
+      - 5
+      - 9
+      - 53
+      - 55
+      - 103
+      2:
+      - 1
+      - 5
+      - 9
+      - 53
+      - 55
+      - 103
+      3:
+      - 7
+      - 13
+      - 23
+      4: 3.9.18
+      5: 0.16.3
+      8:
+      - 4
+      - 5
+      13: darwin-arm64
+    m:
+    - 1: trainer/global_step
+      6:
+      - 3
+    - 1: val_f5_mae
+      5: 1
+      6:
+      - 1
+    - 1: val_f5_rmse
+      5: 1
+      6:
+      - 1
+    - 1: val_f1tof4_w_ae1_latent_mae
+      5: 1
+      6:
+      - 1
+    - 1: val_f1tof4_w_ae1_latent_rmse
+      5: 1
+      6:
+      - 1
+    - 1: total_val_loss
+      5: 1
+      6:
+      - 1
+    - 1: epoch
+      5: 1
+      6:
+      - 1
+    - 1: train_f5_mae
+      5: 1
+      6:
+      - 1
+    - 1: train_f5_rmse
+      5: 1
+      6:
+      - 1
+    - 1: train_f1tof4_w_ae1_latent_mae
+      5: 1
+      6:
+      - 1
+    - 1: train_f1tof4_w_ae1_latent_rmse
+      5: 1
+      6:
+      - 1
+    - 1: total_train_loss
+      5: 1
+      6:
+      - 1
+    - 1: l1_weight_loss
+      5: 1
+      6:
+      - 1
+    - 1: l2_weight_loss
+      5: 1
+      6:
+      - 1
+    - 1: l1_bias_loss
+      5: 1
+      6:
+      - 1
+    - 1: l2_bias_loss
+      5: 1
+      6:
+      - 1
+nn_save_dir:
+  desc: null
+  value: ../runs/results_for_RL_paper/test
+nn_params_dict:
+  desc: null
+  value:
+    model_type: test
+    submodules:
+      encoder:
+        connect_to:
+        - f1tof4_w_ae1_latent
+        num_nodes_per_layer:
+        - 2
+        layer_type:
+        - linear
+        layer_activation:
+        - null
+        layer_kernel_init:
+        - xavier_normal
+        layer_kernel_init_gain:
+        - 1
+        layer_bias_init:
+        - zeros
+        layer_weight_reg:
+          l1: 0.01
+          l2: 0
+        save_output_on_fit_end: true
+        save_params: true
+      predictor:
+        connect_to:
+        - encoder
+        num_nodes_per_layer:
+        - 3
+        - 3
+        - 1
+        layer_type:
+        - linear
+        - linear
+        - linear
+        layer_activation:
+        - tanh
+        - tanh
+        - tanh
+        layer_kernel_init:
+        - xavier_normal
+        - xavier_normal
+        - xavier_normal
+        layer_kernel_init_gain:
+        - 1
+        - 1
+        - 1
+        layer_bias_init:
+        - zeros
+        - zeros
+        - zeros
+        layer_weight_reg:
+          l1: 0.01
+          l2: 0
+        save_output_on_fit_end: true
+        save_params: true
+        loss:
+          type: mae
+          wt: 1
+          target: f5
+      decoder:
+        connect_to:
+        - encoder
+        num_nodes_per_layer:
+        - 5
+        layer_type:
+        - linear
+        layer_activation:
+        - null
+        layer_kernel_init:
+        - xavier_normal
+        layer_kernel_init_gain:
+        - 1
+        layer_bias_init:
+        - zeros
+        layer_weight_reg:
+          l1: 0
+          l2: 0
+        loss:
+          type: mae
+          wt: 1
+          target: f1tof4_w_ae1_latent
+        save_params: true
+nn_train_params_dict:
+  desc: null
+  value:
+    global_seed: 0
+    epochs: 2000
+    batch_size: 10
+    shuffle_data_between_epochs: true
+    test_split: 0.2
+    optimizer:
+      type: adam
+      lr: 0.001
+    callbacks:
+      early_stopping:
+        monitor: total_val_loss
+        min_delta: 1.0e-05
+        patience: 200
+        mode: min
+      model_checkpoint:
+        monitor: total_val_loss
+        save_top_k: 1
+        mode: min
+nn_datasets_dict:
+  desc: null
+  value:
+    train:
+      X2:
+        skiprows: 1
+        header: null
+        path: ../datasets/synthetic_dataset/synthetic_data_gridSamples_200_with_ae1_latents_concat.csv
+        variables:
+          f1tof4_w_ae1_latent:
+            cols:
+            - 8
+            - 9
+            - 10
+            - 11
+            - 13
+            preprocess: std
+          f5:
+            cols:
+            - 12
+            preprocess: std

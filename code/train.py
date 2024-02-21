@@ -5,7 +5,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 import sys
 import torch
 from torch.utils.data import DataLoader
-from pytorch_lightning.loggers import CSVLogger
+from pytorch_lightning.loggers import CSVLogger, WandbLogger
 from pytorch_lightning import Trainer
 import click
 import numpy as np
@@ -19,8 +19,9 @@ from utils.custom_utils import set_global_random_seed, read_from_pickle
 @click.option('--run_dir', prompt='run_dir', help='Specify the run dir where the model is located.')
 @click.option('--ae', prompt='ae', help='Specify AutoEncoder number used for making the prediction.')
 @click.option('--accelerator', prompt='accelerator', help='Specify the type of acceleration to use.')
+@click.option('--wandb_project_name', prompt='wandb_project_name', help='Specify the name of the wandb project.')
 
-def train(run_dir, ae, accelerator):
+def train(run_dir, ae, accelerator, wandb_project_name):
     """ Training script"""
 
     ae_index = int(ae) - 1
@@ -112,11 +113,11 @@ def train(run_dir, ae, accelerator):
     if os.path.exists(logs_dir) is False:
         os.mkdir(logs_dir)
 
-    # tb_logger = TensorBoardLogger(logs_dir, name='tb_logs')
-    # loggers.append(tb_logger)
+    wandb_logger = WandbLogger(project=wandb_project_name, name=ae.model_type)
 
     csv_logger = CSVLogger(logs_dir, name='csv_logs')
     loggers.append(csv_logger)
+    loggers.append(wandb_logger)
 
     # accelearator set to 'auto' for automatic detection of which system to train on
     callbacks = create_callback_object(nn_train_params_dict, nn_save_dir)
