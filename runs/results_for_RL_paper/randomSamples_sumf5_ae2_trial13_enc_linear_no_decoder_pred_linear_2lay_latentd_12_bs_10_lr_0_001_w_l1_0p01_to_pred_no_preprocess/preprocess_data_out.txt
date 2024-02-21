@@ -1,0 +1,35 @@
+ --> User provided command line run_dir argument : ../runs/results_for_RL_paper
+ --> User provided command line ae argument : 2
+ --> User provided command line mode argument : train
+ --> Set global random seed 0.
+ --> Saved user provided dictionaries to pickle.
+ --> Saved user provided dictionaries to run_summary.txt
+ --> Dataset directory created.
+ --> Found .csv file : synthetic_data_randomSamples_200_sumf5_with_ae1_latents_concat.csv
+ --> Loaded X2 as a dataframe.
+ --> X2 Dataframe shape : (200, 21)
+ --> Dataframe head.
+         0         1         2         3   ...        17        18        19        20
+0  5.507979  0.685499  5.280052  2.510925  ... -0.255056 -0.597310 -0.369628  0.460729
+1  7.081478  0.764963  6.733596  2.378256  ... -0.005694  0.033821 -0.626565 -0.418170
+2  2.909047  5.387927  7.453658  2.677672  ...  0.676346  0.428922  0.031622  0.101832
+3  5.108276  0.755664  7.299737  2.631899  ... -0.407921  0.047847  0.034826  0.824015
+4  8.929470  1.837723  4.241159  9.727155  ... -1.088649  0.145146 -0.257715 -0.103600
+
+[5 rows x 21 columns]
+ --> No NA values found in f1tof4_w_ae1_latent.
+ --> Extracting data for f1tof4_w_ae1_latent from X2 dataframe cols [8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20].
+ --> f1tof4_w_ae1_latent dtype : float32
+ --> f1tof4_w_ae1_latent shape : (200, 12)
+ --> No NA values found in f5.
+ --> Extracting data for f5 from X2 dataframe cols [12].
+ --> No preprocessing done for f5                             from X2 dataframe cols [12].
+ --> f5 dtype : float32
+ --> f5 dim   : (200, 1)
+ --> Created train and val datasets for dataset.
+ --> Number of variables in dataset 2.
+ --> Train dataset shape : {'f1tof4_w_ae1_latent': (160, 12), 'f5': (160, 1)}.
+ --> Val dataset shape :{'f1tof4_w_ae1_latent': (40, 12), 'f5': (40, 1)}.
+ --> Saved dataset to pickle under /datasets directory.
+ --> Preprocessed dataset.
+ --> PROGRAM EXIT.

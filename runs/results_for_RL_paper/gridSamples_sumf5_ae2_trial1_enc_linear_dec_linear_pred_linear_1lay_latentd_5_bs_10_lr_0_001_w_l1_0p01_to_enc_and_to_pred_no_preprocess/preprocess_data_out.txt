@@ -1,0 +1,35 @@
+ --> User provided command line run_dir argument : ../runs/results_for_RL_paper
+ --> User provided command line ae argument : 2
+ --> User provided command line mode argument : train
+ --> Set global random seed 0.
+ --> Saved user provided dictionaries to pickle.
+ --> Saved user provided dictionaries to run_summary.txt
+ --> Dataset directory created.
+ --> Found .csv file : synthetic_data_gridSamples_200_sumf5_with_ae1_latents_concat.csv
+ --> Loaded X2 as a dataframe.
+ --> X2 Dataframe shape : (200, 14)
+ --> Dataframe head.
+         0         1         2         3         4   ...         9         10         11         12        13
+0  0.500000  0.500000  0.500000  0.500000  0.500000  ... -74.166748  1.250000  49.480792 -21.435956 -2.485130
+1  0.547739  0.547739  0.547739  0.547739  0.547739  ... -64.409393  1.471443  59.107419  -1.430389 -2.459903
+2  0.595477  0.595477  0.595477  0.595477  0.595477  ... -55.467929  1.705255  69.441803  18.515875 -2.434676
+3  0.643216  0.643216  0.643216  0.643216  0.643216  ... -47.216378  1.950130  80.404919  38.448486 -2.409450
+4  0.690955  0.690955  0.690955  0.690955  0.690955  ... -39.555857  2.204762  91.897572  58.365825 -2.384224
+
+[5 rows x 14 columns]
+ --> No NA values found in f1tof4_w_ae1_latent.
+ --> Extracting data for f1tof4_w_ae1_latent from X2 dataframe cols [8, 9, 10, 11, 13].
+ --> f1tof4_w_ae1_latent dtype : float32
+ --> f1tof4_w_ae1_latent shape : (200, 5)
+ --> No NA values found in f5.
+ --> Extracting data for f5 from X2 dataframe cols [12].
+ --> No preprocessing done for f5                             from X2 dataframe cols [12].
+ --> f5 dtype : float32
+ --> f5 dim   : (200, 1)
+ --> Created train and val datasets for dataset.
+ --> Number of variables in dataset 2.
+ --> Train dataset shape : {'f1tof4_w_ae1_latent': (160, 5), 'f5': (160, 1)}.
+ --> Val dataset shape :{'f1tof4_w_ae1_latent': (40, 5), 'f5': (40, 1)}.
+ --> Saved dataset to pickle under /datasets directory.
+ --> Preprocessed dataset.
+ --> PROGRAM EXIT.

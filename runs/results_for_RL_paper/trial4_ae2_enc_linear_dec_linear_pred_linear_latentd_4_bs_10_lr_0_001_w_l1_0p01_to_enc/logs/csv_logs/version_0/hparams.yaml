@@ -1,0 +1,109 @@
+nn_datasets_dict:
+  train:
+    X2:
+      header: null
+      path: ../datasets/synthetic_dataset/synthetic_data_gridSamples_200_sumf5_with_ae1_latents_concat.csv
+      skiprows: 1
+      variables:
+        f1tof4_w_ae1_latent:
+          cols:
+          - 8
+          - 9
+          - 10
+          - 11
+          - 13
+          preprocess: std
+        f5:
+          cols:
+          - 12
+          preprocess: std
+nn_params_dict:
+  model_type: trial4_ae2_enc_linear_dec_linear_pred_linear_latentd_4_bs_10_lr_0_001_w_l1_0p01_to_enc
+  submodules:
+    decoder:
+      connect_to:
+      - encoder
+      layer_activation:
+      - null
+      layer_bias_init:
+      - zeros
+      layer_kernel_init:
+      - xavier_normal
+      layer_kernel_init_gain:
+      - 1
+      layer_type:
+      - linear
+      layer_weight_reg:
+        l1: 0
+        l2: 0
+      loss:
+        target: f1tof4_w_ae1_latent
+        type: mae
+        wt: 1
+      num_nodes_per_layer:
+      - 5
+      save_params: true
+    encoder:
+      connect_to:
+      - f1tof4_w_ae1_latent
+      layer_activation:
+      - null
+      layer_bias_init:
+      - zeros
+      layer_kernel_init:
+      - xavier_normal
+      layer_kernel_init_gain:
+      - 1
+      layer_type:
+      - linear
+      layer_weight_reg:
+        l1: 0.01
+        l2: 0
+      num_nodes_per_layer:
+      - 4
+      save_output_on_fit_end: true
+      save_params: true
+    predictor:
+      connect_to:
+      - encoder
+      layer_activation:
+      - null
+      layer_bias_init:
+      - zeros
+      layer_kernel_init:
+      - xavier_normal
+      layer_kernel_init_gain:
+      - 1
+      layer_type:
+      - linear
+      layer_weight_reg:
+        l1: 0
+        l2: 0
+      loss:
+        target: f5
+        type: mae
+        wt: 1
+      num_nodes_per_layer:
+      - 1
+      save_output_on_fit_end: true
+      save_params: true
+nn_save_dir: ../runs/results_for_RL_paper/trial4_ae2_enc_linear_dec_linear_pred_linear_latentd_4_bs_10_lr_0_001_w_l1_0p01_to_enc
+nn_train_params_dict:
+  batch_size: 10
+  callbacks:
+    early_stopping:
+      min_delta: 1.0e-05
+      mode: min
+      monitor: total_val_loss
+      patience: 200
+    model_checkpoint:
+      mode: min
+      monitor: total_val_loss
+      save_top_k: 1
+  epochs: 2000
+  global_seed: 0
+  optimizer:
+    lr: 0.001
+    type: adam
+  shuffle_data_between_epochs: true
+  test_split: 0.2

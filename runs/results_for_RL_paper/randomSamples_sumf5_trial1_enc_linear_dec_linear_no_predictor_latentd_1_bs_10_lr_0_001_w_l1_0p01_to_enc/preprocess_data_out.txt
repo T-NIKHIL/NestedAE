@@ -1,0 +1,38 @@
+ --> User provided command line run_dir argument : ../runs/results_for_RL_paper
+ --> User provided command line ae argument : 1
+ --> User provided command line mode argument : train
+ --> Set global random seed 0.
+ --> Saved user provided dictionaries to pickle.
+ --> Saved user provided dictionaries to run_summary.txt
+ --> Dataset directory created.
+ --> Found .csv file : synthetic_data_randomSamples_200_sumf5.csv
+ --> Loaded X1 as a dataframe.
+ --> X1 Dataframe shape : (200, 13)
+ --> Dataframe head.
+         0         1         2         3   ...          9           10         11        12
+0  5.507979  0.685499  5.280052  2.510925  ...  178.963600   -2.805895   2.524269 -0.926765
+1  7.081478  0.764963  6.733596  2.378256  ...  202.479920  102.891639 -86.419233  0.943460
+2  2.909047  5.387927  7.453658  2.677672  ...  117.037889  -29.693935  52.372349 -0.680259
+3  5.108276  0.755664  7.299737  2.631899  ...  169.465056  123.927563 -44.916485  0.998103
+4  8.929470  1.837723  4.241159  9.727155  ...  230.151047 -140.404990   3.307184 -0.855043
+
+[5 rows x 13 columns]
+ --> No NA values found in x1tox8.
+ --> Extracting data for x1tox8 from X1 dataframe cols [0, 1, 2, 3, 4, 5, 6, 7].
+ --> x1tox8 dtype : float32
+ --> x1tox8 shape : (200, 8)
+ --> No NA values found in f1tof4.
+ --> Extracting data for f1tof4 from X1 dataframe cols [8, 9, 10, 11].
+ --> f1tof4 dtype : float32
+ --> f1tof4 shape : (200, 4)
+ --> No NA values found in f5.
+ --> Extracting data for f5 from X1 dataframe cols [12].
+ --> f5 dtype : float32
+ --> f5 shape : (200, 1)
+ --> Created train and val datasets for dataset.
+ --> Number of variables in dataset 3.
+ --> Train dataset shape : {'x1tox8': (160, 8), 'f1tof4': (160, 4), 'f5': (160, 1)}.
+ --> Val dataset shape :{'x1tox8': (40, 8), 'f1tof4': (40, 4), 'f5': (40, 1)}.
+ --> Saved dataset to pickle under /datasets directory.
+ --> Preprocessed dataset.
+ --> PROGRAM EXIT.

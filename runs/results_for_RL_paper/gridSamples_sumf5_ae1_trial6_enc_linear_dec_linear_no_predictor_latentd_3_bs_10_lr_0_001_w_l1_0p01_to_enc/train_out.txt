@@ -1,0 +1,67 @@
+ --> User provided command line run_dir argument : ../runs/results_for_RL_paper
+ --> User provided command line ae argument : 1
+ --> Setting global random seed 0.
+ --> Running on cpu.
+ --> Number of threads : 10
+ --> Number of interop threads : 10
+ --> PyTorch configurations
+
+
+ --> Submodule encoder layers :
+ModuleList(
+  (0): Linear(in_features=8, out_features=3, bias=True)
+)
+
+
+ --> Submodule decoder layers :
+ModuleList(
+  (0): Linear(in_features=3, out_features=8, bias=True)
+)
+ --> Model Compilation step complete.
+┏━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━┓
+┃   ┃ Name       ┃ Type       ┃ Params ┃
+┡━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━┩
+│ 0 │ submodules │ ModuleDict │     59 │
+└───┴────────────┴────────────┴────────┘
+Trainable params: 59                                                                                                        
+Non-trainable params: 0                                                                                                     
+Total params: 59                                                                                                            
+Total estimated model params size (MB): 0                                                                                   
+ --> Example Input : 
+{'x1tox8': tensor([-1.7234, -1.7234, -1.7234, -1.7234, -1.7234, -1.7234, -1.7234, -1.7234])}
+
+
+--> Model Trace : 
+
+
+ ---------------------------------- 
+module_name:encoder
+input id:['x1tox8']
+input to submodule :
+tensor([-1.7234, -1.7234, -1.7234, -1.7234, -1.7234, -1.7234, -1.7234, -1.7234])
+output id:encoder
+output from submodule :
+tensor([ 0.0168,  0.8186, -0.5199], grad_fn=<AddBackward0>)
+Submodule output dictionary :
+{'encoder': tensor([ 0.0168,  0.8186, -0.5199], grad_fn=<AddBackward0>)}
+ ---------------------------------- 
+
+
+
+
+ ---------------------------------- 
+module_name:decoder
+input id:['encoder']
+input to submodule :
+tensor([ 0.0168,  0.8186, -0.5199], grad_fn=<CatBackward0>)
+output id:decoder
+output from submodule :
+tensor([-0.5324,  0.0798,  0.3900, -0.3667, -0.2207, -0.4005, -0.3169,  0.1718],
+       grad_fn=<AddBackward0>)
+Submodule output dictionary :
+{'decoder': tensor([-0.5324,  0.0798,  0.3900, -0.3667, -0.2207, -0.4005, -0.3169,  0.1718],
+       grad_fn=<AddBackward0>),
+ 'encoder': tensor([ 0.0168,  0.8186, -0.5199], grad_fn=<AddBackward0>)}
+ ---------------------------------- 
+
+
