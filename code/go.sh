@@ -5,20 +5,18 @@
 # <-- USER START -->
 
 ## Specify folder to look at for the input files
-inputs_dir=inputs_syn_data
+inputs_dir=inputs_perov_data
 ## Specify folder to save the NestedAE outputs to
-run_dir=results_for_RL_paper
+run_dir=perovskite_multiscale_dataset_3
 ## Which Autoencoder(ae) to use for training or inference
 ae=2
 ## Specify mode of operation. train or predict
-mode=train   
+mode=train 
 ## Specify accelerator to use. cpu or gpu
 accelerator=cpu
 ## Name of submodule from which predictions are required.
 ## Use when selecting 'predict' mode. Ignored in 'train' mode.
-submodule=encoder
-## Logging results to wandb 
-wandb_project_name='results_for_RL_paper'
+submodule=bg_pred
 
 # <-- USER END -->
 
@@ -42,7 +40,7 @@ rm -rf inputs
 ##<<comment
 if [[ $mode == train ]]; then
 	echo "In train mode"
-	python3 train.py --run_dir $run_dir --ae $ae --accelerator $accelerator --wandb_project_name $wandb_project_name
+	python3 train.py --run_dir $run_dir --ae $ae --accelerator $accelerator
 fi 
 if [[ $mode == predict ]]; then
 	echo "In predict mode"

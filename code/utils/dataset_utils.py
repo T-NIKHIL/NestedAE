@@ -266,12 +266,28 @@ def create_preprocessed_datasets(nn_save_dir, nn_dataset_dict, global_seed, test
                 print(f' --> {variable_name} dtype : {dtype}')
                 print(f' --> {variable_name} dim   : {shape}')
             elif preprocess_scheme == 'std':
-                samples, preprocessor, dtype, shape = standardize(samples, variable_name)
+                if dataset_dict['load_preprocessor'] is True:
+                    print(f' --> Loading scaler for {variable_name}.')
+                    loaded_dataset = torch.load(dataset_save_dir + '/dataset.pt')
+                    preprocessor = loaded_dataset.variable_preprocessors[variable_name]
+                    dtype = loaded_dataset.variable_dtypes[variable_name]
+                    shape = loaded_dataset.variable_shapes[variable_name]
+                    samples = preprocessor.transform(samples)
+                else:
+                    samples, preprocessor, dtype, shape = standardize(samples, variable_name)
             elif preprocess_scheme == 'ohe':
-                samples, preprocessor, dtype, shape, categories = one_hot_encode(samples, variable_name)
-                print(f' --> Encoded col {cols} \
-                      with {len(categories)} \
-                      categories {categories}')
+                if dataset_dict['load_preprocessor'] is True:
+                    print(f' --> Loading one hot encoder for {variable_name}.')
+                    loaded_dataset = torch.load(dataset_save_dir + '/dataset.pt')
+                    preprocessor = loaded_dataset.variable_preprocessors[variable_name]
+                    dtype = loaded_dataset.variable_dtypes[variable_name]
+                    shape = loaded_dataset.variable_shapes[variable_name]
+                    samples = preprocessor.transform(samples)
+                else:
+                    samples, preprocessor, dtype, shape, categories = one_hot_encode(samples, variable_name)
+                    print(f' --> Encoded col {cols} \
+                        with {len(categories)} \
+                        categories {categories}')
             elif preprocess_scheme == 'lb':
                 samples, preprocessor, dtype, shape = label_binarizer(samples, variable_name)
             elif preprocess_scheme == 'le':
@@ -318,111 +334,48 @@ def create_preprocessed_datasets(nn_save_dir, nn_dataset_dict, global_seed, test
         preview_file_name = 'dataset_preview.csv'
         np.savetxt(dataset_save_dir + '/' + preview_file_name, samples_preview, delimiter=',')
 
-        use_kfold_cross_validator = False
+        train_tensor_dataset,\
+        train_var_shapes, \
+        val_tensor_dataset, \
+        val_var_shapes = create_train_val_datasets(dataset, test_split, 
+                                                    global_seed, dataset_save_dir)
+        
+        print(' --> Created train and val datasets for dataset.')
+        print(f' --> Number of variables in dataset {len(dataset)}.')
+        print(f' --> Train dataset shape : {train_var_shapes}.')
+        print(f' --> Val dataset shape :{val_var_shapes}.')
 
-        if use_kfold_cross_validator:
-            ae_dataset = CreateDataset(name=dataset_name,
-                                    dataset=tensor_dataset,
-                                    variable_names=all_variable_names,
-                                    variable_shapes=variable_shapes,
-                                    variable_preprocessors=variable_preprocessors,
-                                    variable_dtypes=variable_dtypes) 
+        ae_dataset = CreateDataset(name=dataset_name,
+                                dataset=tensor_dataset,
+                                variable_names=all_variable_names,
+                                variable_shapes=variable_shapes,
+                                variable_preprocessors=variable_preprocessors,
+                                variable_dtypes=variable_dtypes) 
 
-            pickle_file_name = 'dataset.pt'
-            torch.save(ae_dataset, dataset_save_dir + '/' + pickle_file_name)
+        pickle_file_name = 'dataset.pt'
+        torch.save(ae_dataset, dataset_save_dir + '/' + pickle_file_name)
 
-            n_splits = 5
-            cross_val_type = 'kfold'
-
-            train_tensor_datasets, \
-            train_tensor_datasets_var_shapes, \
-            val_tensor_datasets, \
-            val_tensor_datasets_var_shapes = create_kfold_datasets(cross_val_type, dataset,
-                                                                   n_splits, global_seed)
-
-            # Preview each train k-fold dataset
-            for i, train_tensor_dataset in enumerate(train_tensor_datasets):
-                
-                variable_names = list(train_tensor_dataset.keys())
-
-                # Create the PyTorch train dataset
-                ae_train_dataset = CreateDataset(name=dataset_name,
-                                                dataset=train_tensor_dataset,
-                                                variable_names=variable_names,
-                                                variable_preprocessors=variable_preprocessors,
-                                                variable_dtypes=variable_dtypes,
-                                                variable_shapes=train_tensor_datasets_var_shapes[i]) 
-
-                pickle_file_name = f'train_dataset_fold_{i}.pt'
-                torch.save(ae_train_dataset, dataset_save_dir + '/' + pickle_file_name)
-
-                ae_val_dataset = CreateDataset(name=dataset_name,
-                                                dataset=val_tensor_datasets[i],
-                                                variable_names=variable_names,
-                                                variable_preprocessors=variable_preprocessors,
-                                                variable_dtypes=variable_dtypes,
-                                                variable_shapes=val_tensor_datasets_var_shapes[i]) 
-
-                pickle_file_name = f'val_dataset_fold_{i}.pt'
-                torch.save(ae_val_dataset, dataset_save_dir + '/' + pickle_file_name)
-
-                j = 0
-                for train_samples, val_samples in zip(train_tensor_dataset.values(), val_tensor_datasets[i].values()):
-                    if j == 0:
-                        train_samples_preview = train_samples
-                        val_samples_preview = val_samples
-                    else:
-                        train_samples_preview = np.hstack((train_samples_preview, train_samples))
-                        val_samples_preview = np.hstack((val_samples_preview, val_samples))
-                    j += 1
-                # Save the train and val samples preview to a csv
-                np.savetxt(dataset_save_dir + '/' + f'train_dataset_preview_fold_{i}.csv', 
-                            train_samples_preview, delimiter=',', header=','.join(variable_names))
-                np.savetxt(dataset_save_dir + '/' + f'val_dataset_preview_fold_{i}.csv', 
-                            val_samples_preview, delimiter=',', header=','.join(variable_names))
-        else:
-            train_tensor_dataset,\
-            train_var_shapes, \
-            val_tensor_dataset, \
-            val_var_shapes = create_train_val_datasets(dataset, test_split, 
-                                                       global_seed, dataset_save_dir)
-            
-            print(' --> Created train and val datasets for dataset.')
-            print(f' --> Number of variables in dataset {len(dataset)}.')
-            print(f' --> Train dataset shape : {train_var_shapes}.')
-            print(f' --> Val dataset shape :{val_var_shapes}.')
-
-            ae_dataset = CreateDataset(name=dataset_name,
-                                    dataset=tensor_dataset,
-                                    variable_names=all_variable_names,
-                                    variable_shapes=variable_shapes,
-                                    variable_preprocessors=variable_preprocessors,
-                                    variable_dtypes=variable_dtypes) 
-
-            pickle_file_name = 'dataset.pt'
-            torch.save(ae_dataset, dataset_save_dir + '/' + pickle_file_name)
-
-            ae_train_dataset = CreateDataset(name=dataset_name,
-                                            dataset=train_tensor_dataset,
-                                            variable_names=all_variable_names,
-                                            variable_preprocessors=variable_preprocessors,
-                                            variable_dtypes=variable_dtypes,
-                                            variable_shapes=train_var_shapes) 
-
-            pickle_file_name = 'train_dataset.pt'
-            torch.save(ae_train_dataset, dataset_save_dir + '/' + pickle_file_name)
-
-            ae_val_dataset = CreateDataset(name=dataset_name,
-                                        dataset=val_tensor_dataset,
+        ae_train_dataset = CreateDataset(name=dataset_name,
+                                        dataset=train_tensor_dataset,
                                         variable_names=all_variable_names,
                                         variable_preprocessors=variable_preprocessors,
                                         variable_dtypes=variable_dtypes,
-                                        variable_shapes=val_var_shapes) 
+                                        variable_shapes=train_var_shapes) 
 
-            pickle_file_name = 'val_dataset.pt'
-            torch.save(ae_val_dataset, dataset_save_dir + '/' + pickle_file_name)
+        pickle_file_name = 'train_dataset.pt'
+        torch.save(ae_train_dataset, dataset_save_dir + '/' + pickle_file_name)
 
-            print(' --> Saved dataset to pickle under /datasets directory.')
+        ae_val_dataset = CreateDataset(name=dataset_name,
+                                    dataset=val_tensor_dataset,
+                                    variable_names=all_variable_names,
+                                    variable_preprocessors=variable_preprocessors,
+                                    variable_dtypes=variable_dtypes,
+                                    variable_shapes=val_var_shapes) 
+
+        pickle_file_name = 'val_dataset.pt'
+        torch.save(ae_val_dataset, dataset_save_dir + '/' + pickle_file_name)
+
+        print(' --> Saved dataset to pickle under /datasets directory.')
     elif mode == 'predict':
         # Save the processed data to .csv file for easy preview
         preview_file_name = 'predict_dataset_preview.csv'
@@ -433,50 +386,6 @@ def create_preprocessed_datasets(nn_save_dir, nn_dataset_dict, global_seed, test
     else:
         raise ValueError(f'Invalid mode specified {mode}.')
     
-def create_kfold_datasets(cross_val_type, dataset, n_splits, global_seed):
-    """ Creates kfold datasets from the dataset provided."""
-
-    # Create a list the will store the kfold datasets
-    train_tensor_datasets = []
-    val_tensor_datasets = []
-
-    # Create a list that will store the variable shapes for each kfold dataset
-    train_tensor_datasets_var_shapes = []
-    val_tensor_datasets_var_shapes = []
-    
-    # Create a cross validator
-    cross_validator = KFold(n_splits=n_splits, shuffle=True, random_state=global_seed)
-
-    i = 0
-    for variable_name, samples in zip(dataset.keys(), dataset.values()):
-
-        # Get the indices for each fold for each variable
-        idxs = cross_validator.split(samples)
-
-        for j, (train_idx, test_idx) in enumerate(idxs):
-
-            print(f' --> {variable_name} Fold {j} : train_idx {train_idx.shape} test_idx {test_idx.shape}')
-
-            # In case of the first variable, create the list and dictionary
-            if i == 0:
-                train_tensor_datasets.extend([{variable_name : torch.tensor(samples[train_idx][:], dtype=torch.float32)}])
-                val_tensor_datasets.extend([{variable_name : torch.tensor(samples[test_idx][:], dtype=torch.float32)}])
-
-                train_tensor_datasets_var_shapes.extend([{variable_name : samples[train_idx][:].shape}])
-                val_tensor_datasets_var_shapes.extend([{variable_name : samples[test_idx][:].shape}])
-
-            # For all the other variables access the dictionaries for each fold and append the new variable and its samples
-            else:
-                train_tensor_datasets[j][variable_name] = torch.tensor(samples[train_idx][:], dtype=torch.float32)
-                val_tensor_datasets[j][variable_name] = torch.tensor(samples[test_idx][:], dtype=torch.float32)
-
-                train_tensor_datasets_var_shapes[j][variable_name] = samples[train_idx][:].shape
-                val_tensor_datasets_var_shapes[j][variable_name] = samples[test_idx][:].shape
-        
-        i += 1
-
-    return train_tensor_datasets, train_tensor_datasets_var_shapes, val_tensor_datasets, val_tensor_datasets_var_shapes
-
 def create_train_val_datasets(dataset, test_split, global_seed, dataset_save_dir):
     """ Creates a train and test list consisting of the train and test numpy arrays respectively."""
 
