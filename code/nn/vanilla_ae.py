@@ -185,7 +185,6 @@ class VanillaAE(pl.LightningModule):
                 else:
                     raise ValueError('Reparameterization from chosen distribution not defined.\
                                     Please add Reparameterization scheme in forward().')
-                
             # Case : input comes from a dataset or another submodule
             else:
                 inp = []
@@ -194,18 +193,13 @@ class VanillaAE(pl.LightningModule):
                         inp.append(module_inputs[submodule_input_id])
                     else: # Then input is output from previous module
                         inp.append(submodule_outputs[submodule_input_id])
-
                 # Convert list of tensors to a single tensor
                 inp = torch.concatenate(inp, dim=-1)
-
                 for j, layer in enumerate(submodule):
-
                     if j == 0:
                         output = layer(inp)
-
                     else:
                         output = layer(output)
-
             submodule_outputs[submodule_name] = output
 
             if self.trace_model:
@@ -236,20 +230,16 @@ class VanillaAE(pl.LightningModule):
         losses = {}
         for submodule_name, submodule_dict in \
             zip(self.submodule_dicts.keys(), self.submodule_dicts.values()):
-
             if 'loss' in list(submodule_dict.keys()):
                 losses[submodule_name] = create_loss_object(submodule_dict['loss']['type'])
-
         self.submodule_losses = losses
 
     def configure_optimizers(self):
         """Configure the optimizers."""
         optimizer = create_optimizer_object(self.submodules, self.nn_train_params_dict)
-
         if 'scheduler' in list(self.nn_train_params_dict.keys()):
             scheduler = create_scheduler_object(optimizer, self.nn_train_params_dict)
             return {'optimizer':optimizer, 'lr_scheduler':scheduler}
-
         return {'optimizer':optimizer}
 
     def training_step(self, batch, batch_idx):
@@ -379,24 +369,23 @@ class VanillaAE(pl.LightningModule):
         # Regularization losses
         for submodule_name, submodule_dict in \
                 zip(self.submodule_dicts.keys(), self.submodule_dicts.values()):
-            if 'layer_weight_reg' in list(submodule_dict.keys()):
-                if 'l1' in list(submodule_dict['layer_weight_reg'].keys()):
-                    lambda_l1 = submodule_dict['layer_weight_reg']['l1']
-                    lambda_l1 = torch.tensor(lambda_l1, device=self.device, dtype=torch.float32, requires_grad=False)
-                    for name, params in self.submodules[submodule_name].named_parameters():
-                        if name.endswith('.weight'):
-                            w = params.view(-1) 
-                            l1_weight_loss = l1_weight_loss.add(w.abs().sum().multiply(lambda_l1))
-                if 'l2' in list(submodule_dict['layer_weight_reg'].keys()):
-                    lambda_l2 = submodule_dict['layer_weight_reg']['l2']
-                    lambda_l2 = torch.tensor(lambda_l2, device=self.device, dtype=torch.float32, requires_grad=False)
-                    for name, params in self.submodules[submodule_name].named_parameters():
-                        if name.endswith('.weight'):
-                            # Params view is important here since weights is a 2D tensor which we unwrap to a 1D tensor
-                            # params.data :- returns the weight data. No reshape
-                            # params.view :- returns the weight data. With reshape
-                            w = params.view(-1)
-                            l2_weight_loss = l2_weight_loss.add(w.pow(2).sum().multiply(lambda_l2))
+            if 'layer_weight_reg_l1' in list(submodule_dict.keys()):
+                lambda_l1 = submodule_dict['layer_weight_reg_l1']
+                lambda_l1 = torch.tensor(lambda_l1, device=self.device, dtype=torch.float32, requires_grad=False)
+                for name, params in self.submodules[submodule_name].named_parameters():
+                    if name.endswith('.weight'):
+                        w = params.view(-1) 
+                        l1_weight_loss = l1_weight_loss.add(w.abs().sum().multiply(lambda_l1))
+            if 'layer_weight_reg_l2' in list(submodule_dict.keys()):
+                lambda_l2 = submodule_dict['layer_weight_reg_l2']
+                lambda_l2 = torch.tensor(lambda_l2, device=self.device, dtype=torch.float32, requires_grad=False)
+                for name, params in self.submodules[submodule_name].named_parameters():
+                    if name.endswith('.weight'):
+                        # Params view is important here since weights is a 2D tensor which we unwrap to a 1D tensor
+                        # params.data :- returns the weight data. No reshape
+                        # params.view :- returns the weight data. With reshape
+                        w = params.view(-1)
+                        l2_weight_loss = l2_weight_loss.add(w.pow(2).sum().multiply(lambda_l2))
             # Future Support
             if 'layer_bias_reg' in list(submodule_dict.keys()):
                 pass
@@ -546,15 +535,6 @@ class VanillaAE(pl.LightningModule):
     def on_fit_start(self):
         """Called when fit begins."""
 
-        # Create csv logs dir if it does not exist
-        logs_dir = self.model_dir + '/logs'
-        if not os.path.exists(logs_dir):
-            os.mkdir(logs_dir)
-
-        csv_logs_dir = logs_dir + '/csv_logs'
-        if not os.path.exists(csv_logs_dir):
-            os.mkdir(csv_logs_dir)
-
         # Show example of input to model
         print(' --> Example Input : ')
         print(self.example_input)
@@ -569,68 +549,14 @@ class VanillaAE(pl.LightningModule):
         sys.stdout.close()
         sys.stdout = sys.__stdout__
 
-    def on_train_batch_end(self, outputs, batch, batch_idx):
-        """ Called at the end of training batch."""
-
-        if isinstance(self.train_losses_batch, pd.core.frame.DataFrame) is False:
-            self.train_losses_batch = pd.DataFrame(self.train_loss_values, index=[batch_idx])
-        else:
-            self.train_losses_batch = pd.concat([self.train_losses_batch, pd.DataFrame(self.train_loss_values, index=[batch_idx])], axis=0)
-
-    def on_validation_batch_end(self, outputs, batch, batch_idx, dataloader_idx=0):
-        """Called at the end of validation batch."""
-
-        if isinstance(self.val_losses_batch, pd.core.frame.DataFrame) is False:
-            self.val_losses_batch = pd.DataFrame(self.val_loss_values, index=[batch_idx])
-        else:
-            self.val_losses_batch = pd.concat([self.val_losses_batch, pd.DataFrame(self.val_loss_values, index=[batch_idx])], axis=0)
-
-    def on_train_epoch_end(self):
-        """Called at the end of training epoch."""
-
-        epoch_results = self.train_losses_batch.apply(np.mean, axis=0, raw=True, result_type='expand').to_frame().transpose()
-        epoch_results.rename(index={0:self.current_epoch}, inplace=True)
-
-        # Reduce the values in each column
-        if isinstance(self.train_losses_epoch, pd.core.frame.DataFrame) is False:
-            self.train_losses_epoch = epoch_results
-            self.train_losses_batch = None
-        else:
-            self.train_losses_epoch = pd.concat([self.train_losses_epoch, epoch_results], axis=0)
-            self.train_losses_batch = None
-
-        # Save dataframe to csv
-        csv_logs_dir = self.model_dir + '/logs/csv_logs'
-        self.train_losses_epoch.to_csv(csv_logs_dir+'/'+'train_logs.csv', sep=',')
-
     def on_validation_epoch_end(self):
         """Called at the end of validation epoch."""
-        # Reduce the values in each column
-        epoch_results = self.val_losses_batch.apply(np.mean, axis=0, raw=True, \
-                                                    result_type='expand').to_frame().transpose()
-        epoch_results.rename(index={0:self.current_epoch}, inplace=True)
-        if not isinstance(self.val_losses_epoch, pd.core.frame.DataFrame):
-            self.val_losses_epoch = epoch_results
-            self.val_losses_batch = None
-        else:
-            self.val_losses_epoch = pd.concat([self.val_losses_epoch, epoch_results], axis=0)
-            self.val_losses_batch = None
-
-        # Save dataframe to csv
-        csv_logs_dir = self.model_dir + '/logs/csv_logs'
-        self.val_losses_epoch.to_csv(csv_logs_dir+'/'+'val_logs.csv', sep=',')
-
-        # At the end of the validation epoch call the model on all dataset inputs
-        submodule_outputs = self(self.all_samples)
-
         # Store the submodule outputs
         for submodule_name, submodule_dict in \
             zip(self.submodule_dicts.keys(), self.submodule_dicts.values()):
-
-            if check_dict_key_exists('save_output_on_epoch_end', submodule_dict):
-
+            if check_dict_key_exists('save_output_on_epoch_end', submodule_dict) and submodule_dict['save_output_on_epoch_end'] is True:
+                submodule_outputs = self(self.all_samples)
                 submodule_output = submodule_outputs[submodule_name]
-
                 if self.current_epoch == 0:
                     self.save_outputs_on_epoch[submodule_name] = [submodule_output]
                 else:
@@ -639,41 +565,39 @@ class VanillaAE(pl.LightningModule):
     def on_fit_end(self):
         """Called at the end of fit() to do things such as logging, saving etc."""
 
-        # Create a submodule outputs dir if it does not exist
-        submodule_outputs_dir = self.model_dir + '/submodule_outputs'
-        if not os.path.exists(submodule_outputs_dir):
-            os.mkdir(submodule_outputs_dir)
-
-        if not os.path.exists(submodule_outputs_dir + '/train'):
-            os.mkdir(submodule_outputs_dir + '/train')
-
-        # Save the 3D numpy array to a pickle in submodule outputs dir
-        for submodule_name, submodule_output_on_epoch in \
-            zip(self.save_outputs_on_epoch.keys(), self.save_outputs_on_epoch.values()):
-
-            submodule_output_3D = torch.stack((submodule_output_on_epoch))
-
-            pickle_path = submodule_outputs_dir + '/train/' + submodule_name + '_output_on_epoch_end.pt'
-            torch.save(submodule_output_3D, pickle_path)
-
         for submodule_name, submodule_dict in \
             zip(self.submodule_dicts.keys(), self.submodule_dicts.values()):
 
-            if check_dict_key_exists('save_output_on_fit_end', submodule_dict):
-
+            if check_dict_key_exists('save_output_on_fit_end', submodule_dict) and submodule_dict['save_output_on_fit_end'] is True:
+                # Create a submodule outputs dir if it does not exist
+                submodule_outputs_dir = self.model_dir + '/submodule_outputs'
+                if not os.path.exists(submodule_outputs_dir):
+                    os.mkdir(submodule_outputs_dir)
+                if not os.path.exists(submodule_outputs_dir + '/train'):
+                    os.mkdir(submodule_outputs_dir + '/train')
                 submodule_outputs = self(self.all_samples)
-
                 submodule_output = submodule_outputs[submodule_name]
-
                 submodule_output_arr = submodule_output.detach().numpy()
-
                 filename = submodule_name + '_output_on_fit_end.csv'
                 np.savetxt(submodule_outputs_dir + '/train/' + filename, 
                             submodule_output_arr, 
                             delimiter=',')
+                
+            if check_dict_key_exists('save_output_on_epoch_end', submodule_dict) and submodule_dict['save_output_on_epoch_end'] is True:
+                # Create a submodule outputs dir if it does not exist
+                submodule_outputs_dir = self.model_dir + '/submodule_outputs'
+                if not os.path.exists(submodule_outputs_dir):
+                    os.mkdir(submodule_outputs_dir)
+                if not os.path.exists(submodule_outputs_dir + '/train'):
+                    os.mkdir(submodule_outputs_dir + '/train')
+                # Save the 3D numpy array to a pickle in submodule outputs dir
+                for submodule_name, submodule_output_on_epoch in \
+                    zip(self.save_outputs_on_epoch.keys(), self.save_outputs_on_epoch.values()):
+                    submodule_output_3D = torch.stack((submodule_output_on_epoch))
+                    pickle_path = submodule_outputs_dir + '/train/' + submodule_name + '_output_on_epoch_end.pt'
+                    torch.save(submodule_output_3D, pickle_path)
 
-            if check_dict_key_exists('save_params', submodule_dict):
-
+            if check_dict_key_exists('save_params', submodule_dict) and submodule_dict['save_params'] is True:
                 # Make a directory to store the submodules
                 submodules_dir = self.model_dir + '/submodule_params'
                 if not os.path.exists(submodules_dir):

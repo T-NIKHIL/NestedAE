@@ -20,7 +20,6 @@ list_of_nn_params_dict=[
                                    #        In case of another submodule, specify the name of the submodule.
                                    # dtype : list
 
-                            # When training a single neural network, specify the 'num_nodes per layer' key.
                             'num_nodes_per_layer':[100, 100], 
                                    # desc : Number of nodes in each layer.
                                    # dtype : list
@@ -49,15 +48,10 @@ list_of_nn_params_dict=[
                                    # desc : Bias initialization for each layer. 
                                    # dtype : list.
 
-                            'layer_weight_reg_l1':0,
-                                   # desc : L1 Weight regularization.
+                            'layer_weight_reg':{'l1':0.01, 'l2':0},
+                                   # desc : Weight regularization.
                                    #        Same regularization will be applied to all layers.
-                                   # dtype : float
-                            
-                            'layer_weight_reg_l2':0.001,
-                                   # desc : L2 Weight regularization.
-                                   #        Same regularization will be applied to all layers.
-                                   # dtype : float
+                                   # dtype : dict 
 
                             'layer_dropout':[{'type':'Dropout', 'p':0.1}, None], 
                                    # desc : Dropout layer. Specify None if no dropout required for layer.

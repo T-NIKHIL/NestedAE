@@ -312,30 +312,28 @@ def create_callback_object(nn_train_params_dict, nn_save_dir):
             model_checkpoint = ModelCheckpoint(dirpath=checkpoints_dir,
                                                 filename='{epoch}-{total_val_loss:.2f}',
                                                 monitor=callback_dict['monitor'],
-                                                verbose=True,
+                                                verbose=False,
                                                 save_last=True,
                                                 save_top_k=callback_dict['save_top_k'],
                                                 mode=callback_dict['mode'],
                                                 auto_insert_metric_name=True)
             callback_objects.append(model_checkpoint)
-
+        elif callback_type == 'rich_model_summary':
+            callback_objects.append(RichModelSummary(max_depth=1))
+        elif callback_type == 'rich_progress_bar':
+            progress_bar = RichProgressBar(
+                            theme=RichProgressBarTheme(
+                                description="green_yellow",
+                                progress_bar="green1",
+                                progress_bar_finished="green1",
+                                progress_bar_pulse="#6206E0",
+                                batch_progress="green_yellow",
+                                time="grey82",
+                                processing_speed="grey82",
+                                metrics="grey82"),
+                            leave=False)
+            callback_objects.append(progress_bar)
         else:
             raise ValueError(f' --> {callback_type} callback not defined.')
-
-    callback_objects.append(RichModelSummary(max_depth=1))
-
-    progress_bar = RichProgressBar(
-    theme=RichProgressBarTheme(
-        description="green_yellow",
-        progress_bar="green1",
-        progress_bar_finished="green1",
-        progress_bar_pulse="#6206E0",
-        batch_progress="green_yellow",
-        time="grey82",
-        processing_speed="grey82",
-        metrics="grey82"),
-    leave=False)
-
-    callback_objects.append(progress_bar)
-
+        
     return callback_objects

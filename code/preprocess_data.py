@@ -16,14 +16,16 @@ from utils.dataset_utils import create_preprocessed_datasets
 @click.command()
 @click.option('--run_dir', prompt='run_dir', 
               help='Specify the run dir where the model is located.')
-@click.option('--ae', prompt='ae',  
-              help='Specify AutoEncoder number used for making the prediction.')
+@click.option('--nn', prompt='nn',  
+              help='Specify neural network number used for making the prediction.')
 @click.option('--mode', prompt='mode', 
               help='Specify whether to preprocess train or predict data.')
+@click.option('--kfolds', prompt='kfolds', 
+              help='Specify the number of folds for cross validation.')
 
-def preprocess_data(run_dir, ae, mode):
+def preprocess_data(run_dir, nn, mode, kfolds):
 
-    ae_index = int(ae) - 1
+    nn_idx = int(nn) - 1
 
     run_dir = '../runs/' + run_dir
 
@@ -34,9 +36,9 @@ def preprocess_data(run_dir, ae, mode):
     else:
         print(' --> Found Run directory already exists.')
 
-    nn_params_dict = list_of_nn_params_dict[ae_index]
-    nn_train_params_dict = list_of_nn_train_params_dict[ae_index]
-    nn_datasets_dict = list_of_nn_datasets_dict[ae_index]
+    nn_params_dict = list_of_nn_params_dict[nn_idx]
+    nn_train_params_dict = list_of_nn_train_params_dict[nn_idx]
+    nn_datasets_dict = list_of_nn_datasets_dict[nn_idx]
 
     if len(nn_params_dict.keys()) == 0:
         raise ValueError(' --> Provided empty dictionary nn params dictionary !')
@@ -53,16 +55,16 @@ def preprocess_data(run_dir, ae, mode):
 
     if os.path.exists(nn_save_dir) is False:
         os.mkdir(nn_save_dir)
-        print(' --> NN directory created.')
+        print(' --> nn directory created.')
     else:
-        print(' --> Found NN directory already exists.')
+        print(' --> nn directory already exists.')
 
     # Send all print statements to file for debugging
     print_file_path = nn_save_dir + '/' + 'preprocess_data_out.txt'
     sys.stdout = open(print_file_path, "w", encoding='utf-8')
 
     print(f' --> User provided command line run_dir argument : {run_dir}')
-    print(f' --> User provided command line ae argument : {ae}')
+    print(f' --> User provided command line nn argument : {nn_idx}')
     print(f' --> User provided command line mode argument : {mode}')
 
     set_global_random_seed(global_seed)
@@ -96,9 +98,9 @@ def preprocess_data(run_dir, ae, mode):
             raise TypeError(f' --> Value for {_required_key} key in nn_train_params_dictionary should be of type {_required_keys_dtypes[i]}.')
         
     # Perform same check for nn_params_dict
-    _required_submodule_keys = ['connect_to',
-                                'layer_type',
+    _required_submodule_keys = ['connect_to'
                                 'num_nodes_per_layer',
+                                'layer_type',
                                 'layer_activation',
                                 'layer_kernel_init',
                                 'layer_bias_init']
@@ -142,8 +144,9 @@ def preprocess_data(run_dir, ae, mode):
                                     {submodule_name} loss dictionary.')
 
             for i, _required_key in enumerate(_required_submodule_keys):
-                if isinstance(submodule_dict[_required_key], _required_submodule_keys_dtypes[i]) is False:
-                    raise TypeError(f' --> Value for {_required_key} key in submodule dictionary {submodule_name} should be of type {_required_submodule_keys_dtypes[i]}.')
+                if isinstance(submodule_dict[_required_key], list) is False and isinstance(submodule_dict[_required_key], dict) is False:
+                    raise TypeError(f' --> Value for {_required_key} key in submodule dictionary {submodule_name} should be of type list.')
+                
 
     # Check if paths to all directories provided in nn datasets dictionary exist
     datasets = nn_datasets_dict[mode]
@@ -151,45 +154,17 @@ def preprocess_data(run_dir, ae, mode):
         path = dataset_dict['path']
         if os.path.exists(path) is False:
             raise FileNotFoundError(f' --> Unable to find {path} to read dataset from.')
-
-    ################################################################################################
-    # Save user provided nn dictionaries to pickle 
-    ################################################################################################
-
-    # Save the input dictionaries as pickles
-    save_to_pickle(list_of_nn_datasets_dict, 'list_of_nn_datasets_dict.pkl', run_dir)
-    save_to_pickle(list_of_nn_params_dict, 'list_of_nn_params_dict.pkl', run_dir)
-    save_to_pickle(list_of_nn_train_params_dict, 'list_of_nn_train_params_dict.pkl', run_dir)
-
-    print(' --> Saved user provided dictionaries to pickle.')
-
-    # Save the history of all different models created in the run directory.
-    with open(run_dir + '/' + 'run_summary.txt', 'a') as file:
-        for model_num in range(len(list_of_nn_params_dict)):
-            file.write('--NN params dict (Model {})--'.format(model_num) + '\n')
-            file.write(json.dumps(list_of_nn_params_dict[model_num], indent=4) + '\n')
-            file.write('\n')
-            
-            file.write('--NN train params dict (Model {})--'.format(model_num) + '\n')
-            file.write(json.dumps(list_of_nn_train_params_dict[model_num], indent=4) + '\n')
-            file.write('\n')
-            
-            file.write('--NN dataset dict (Model {})--'.format(model_num) + '\n')
-            file.write(json.dumps(list_of_nn_datasets_dict[model_num], indent=4) + '\n')
-            file.write('\n') 
-
-    print(' --> Saved user provided dictionaries to run_summary.txt')
-
+        
     test_split = nn_train_params_dict['test_split']
-    create_preprocessed_datasets(nn_save_dir, 
-                                 nn_datasets_dict,
-                                 global_seed,
-                                 test_split=test_split,
-                                 mode=mode)
+    if int(kfolds) > 0:
+        create_preprocessed_datasets(nn_save_dir, nn_datasets_dict, global_seed,
+                                    test_split=test_split, mode=mode, kfolds=int(kfolds))
+    else:
+        create_preprocessed_datasets(nn_save_dir, nn_datasets_dict, global_seed,
+                                    test_split=test_split, mode=mode)
 
     print(' --> Preprocessed dataset.')
     print(' --> PROGRAM EXIT.')
 
 if __name__ == '__main__':
-
     preprocess_data()

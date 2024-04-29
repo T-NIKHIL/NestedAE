@@ -60,9 +60,9 @@ list_of_nn_params_dict=[
        {
 
               #'model_type':'ae2_encoder_l_6_l1_1em2_tanh_predictor_100_p_0_1_relu_decoder_linear_seed_0_lr_1em2_bs_612_mae_concat_latents_PSC_datasets_jun14_tfl',
-              #'model_type':'ae2_PCE_predictor_enc_l_2_l1_1em2_tanh_predictor_0_1_100_relu_decoder_linear_seed_0_lr_1em3_bs_100_e_1500_pass_latents_ae1_fold_0_ae2_fold_2_xavier_normal_gain_10',
+              'model_type':'ae2_PCE_predictor_enc_l_18_l1_1em2_tanh_predictor_0_1_100_relu_decoder_linear_seed_0_lr_1em3_bs_100_e_1500_pass_latents_ae1_fold_0_ae2_fold_2_xavier_normal_gain_10',
               #'model_type':'Voc_pred_dataset_with_ABX_props',
-              'model_type':'test_ae2_ldim2',
+              #'model_type':'test_ae2_ldim2',
 
               'submodules':{
 

@@ -1,4 +1,4 @@
-" Predict script "
+""" Predict script """
 
 import logging, os
 logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
@@ -14,14 +14,14 @@ from utils.custom_utils import set_global_random_seed, read_from_pickle
 
 @click.command()
 @click.option('--run_dir', prompt='run_dir', help='Specify the run dir where the model is located.')
-@click.option('--ae', prompt='ae', help='Specify AutoEncoder number used for making the prediction.')
+@click.option('--nn', prompt='nn', help='Specify neural network number used for making the prediction.')
 @click.option('--accelerator', prompt='accelerator', help='Specify the type of acceleration to use.')
 @click.option('--submodule', prompt='submodule', help='Enter a submodule.')
 
-def predict(run_dir, ae, accelerator, submodule):
+def predict(run_dir, nn, accelerator, submodule):
     """ Predict script"""
     
-    ae_index = int(ae) - 1
+    nn_idx = int(nn) - 1
 
     run_dir = '../runs/' + run_dir
 
@@ -29,9 +29,9 @@ def predict(run_dir, ae, accelerator, submodule):
     list_of_nn_train_params_dict = read_from_pickle('list_of_nn_train_params_dict.pkl', run_dir)
     list_of_nn_datasets_dict = read_from_pickle('list_of_nn_datasets_dict.pkl', run_dir)
 
-    nn_params_dict = list_of_nn_params_dict[ae_index]
-    nn_train_params_dict = list_of_nn_train_params_dict[ae_index]
-    nn_datasets_dict = list_of_nn_datasets_dict[ae_index]
+    nn_params_dict = list_of_nn_params_dict[nn_idx]
+    nn_train_params_dict = list_of_nn_train_params_dict[nn_idx]
+    nn_datasets_dict = list_of_nn_datasets_dict[nn_idx]
 
     global_seed = nn_train_params_dict['global_seed']
 
@@ -42,7 +42,7 @@ def predict(run_dir, ae, accelerator, submodule):
     sys.stdout = open(print_file_path, "w")
 
     print(f' --> User provided command line run_dir argument : {run_dir}')
-    print(f' --> User provided command line ae argument : {ae}')
+    print(f' --> User provided command line nn idx argument : {nn_idx}')
     print(f' --> User provided command line accelerator argument : {accelerator}')
     print(f' --> User provided command line submodule argument : {submodule}')
 
