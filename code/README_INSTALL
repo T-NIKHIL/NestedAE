@@ -1,4 +1,0 @@
-1. Create a conda environment with python=3.9.18
-conda create -n your_env_name python=3.9.18
-2. Update your_env_name with pip packages specified in nestedae.yml
-conda env update --file nestedae.yml
