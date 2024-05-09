@@ -19,11 +19,11 @@ list_of_nn_train_params_dict=[
             # desc: Shuffle data between epochs
             # dtype: bool
 
-         'test_split':0.2, 
+         'test_split':0.1, 
             # desc: Fraction of data to use for validation
             # dtype: float
 
-         'optimizer':{'type':'adam', 'lr':[0.001, 0.001], 'submodule_name':['submodule_1_name_goes_here', 'submodule_2_name_goes_here']},
+         'optimizer':{'type':'adam', 'lr':0.001},
 
          #'scheduler':{'type':'reduce_lr_on_plateau'},
          #'scheduler':{'type':'multi_step', 'milestones':[30], 'gamma':0.1},

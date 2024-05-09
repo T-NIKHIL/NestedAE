@@ -5,9 +5,9 @@
 # <-- USER START -->
 
 ## Specify folder to look at for the input files
-inputs_dir=inputs_syn_grid_lin_data
+inputs_dir=inputs_perov_data_v2
 ## Specify folder to save the NestedAE outputs to
-run_dir=syn_grid_lin_dataset
+run_dir=perovskite_multiscale_dataset_v2
 ## Which neural network to use for training or inference
 nn=1
 ## Specify mode of operation. train or predict (Ignored when tuning neural network parameters)

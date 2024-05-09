@@ -46,22 +46,35 @@ def run_wandb_agent(fold_num, train_dataloader, val_dataloader, accelerator):
     run = wandb.init(job_type='training', resume=False, reinit=False, dir=nn_save_dir+'/tune_nn_params')
     new_nn_params_dict = copy.deepcopy(nn_params_dict)
     for submodule in new_nn_params_dict['submodules'].keys():
+
         new_nn_params_dict['submodules'][submodule]['num_nodes_per_layer'] = [
-            wandb.config[f'{submodule}-hidden_dim']]*wandb.config[f'{submodule}-hidden_layers'] + [wandb.config[f'{submodule}-output_dim']]
+            wandb.config['encoder-hidden_dim']]*wandb.config['encoder-hidden_layers'] + [wandb.config[f'{submodule}-output_dim']]
+        
         new_nn_params_dict['submodules'][submodule]['layer_type'] = [
-            wandb.config[f'{submodule}-layer_type']]*(wandb.config[f'{submodule}-hidden_layers'] + 1)
-        new_nn_params_dict['submodules'][submodule]['layer_activation'] = [
-            wandb.config[f'{submodule}-layer_activation']]*(wandb.config[f'{submodule}-hidden_layers'] + 1)
+            wandb.config['encoder-layer_type']]*(wandb.config['encoder-hidden_layers'] + 1)
+        
+        if submodule == 'encoder':
+            new_nn_params_dict['submodules'][submodule]['layer_activation'] = [
+                wandb.config['encoder-layer_activation']]*(wandb.config['encoder-hidden_layers'] + 1)
+        else:
+            new_nn_params_dict['submodules'][submodule]['layer_activation'] = [
+                wandb.config['encoder-layer_activation']]*(wandb.config['encoder-hidden_layers']) + [wandb.config[f'{submodule}-output_activation']]
+        
         new_nn_params_dict['submodules'][submodule]['layer_kernel_init'] = [
-            wandb.config[f'{submodule}-layer_kernel_init']]*(wandb.config[f'{submodule}-hidden_layers'] + 1)
+            wandb.config['encoder-layer_kernel_init']]*(wandb.config['encoder-hidden_layers'] + 1)
+        
         new_nn_params_dict['submodules'][submodule]['layer_kernel_init_gain'] = [
-            wandb.config[f'{submodule}-layer_kernel_init_gain']]*(wandb.config[f'{submodule}-hidden_layers'] + 1)
+            wandb.config['encoder-layer_kernel_init_gain']]*(wandb.config['encoder-hidden_layers'] + 1)
+        
         new_nn_params_dict['submodules'][submodule]['layer_bias_init'] = [
-            wandb.config[f'{submodule}-layer_bias_init']]*(wandb.config[f'{submodule}-hidden_layers'] + 1)
+            wandb.config['encoder-layer_bias_init']]*(wandb.config['encoder-hidden_layers'] + 1)
+        
         new_nn_params_dict['submodules'][submodule][
-            'layer_weight_reg_l1'] = wandb.config[f'{submodule}-layer_weight_reg_l1']
+            'layer_weight_reg_l1'] = wandb.config['encoder-layer_weight_reg_l1']
+        
         new_nn_params_dict['submodules'][submodule][
-            'layer_weight_reg_l2'] = wandb.config[f'{submodule}-layer_weight_reg_l2']
+            'layer_weight_reg_l2'] = wandb.config['encoder-layer_weight_reg_l2']
+        
         new_nn_params_dict['submodules'][submodule]['save_params'] = False
         new_nn_params_dict['submodules'][submodule]['save_output_on_fit_end'] = False
         new_nn_params_dict['submodules'][submodule]['save_output_on_epoch_end'] = False
@@ -222,7 +235,8 @@ def run_tune_nn_params(run_dir, nn, kfolds, user_name, project_name, sweep_type,
         if 'loss' in submodule_params:
             submodule_params.remove('loss')
         for submodule_param in submodule_params:
-            params_to_tune[f'{submodule}-{submodule_param}'] = nn_params_dict['submodules'][submodule][submodule_param]
+            if isinstance(nn_params_dict['submodules'][submodule][submodule_param], dict):
+                params_to_tune[f'{submodule}-{submodule_param}'] = nn_params_dict['submodules'][submodule][submodule_param]
 
     # Define the sweep configuration
     sweep_config = {
