@@ -15,7 +15,9 @@ from utils.dataset_utils import create_preprocessed_datasets
 
 @click.command()
 @click.option('--run_dir', prompt='run_dir', 
-              help='Specify the run dir where the model is located.')
+              help='The run directory contains all the NestedAE models trained on the multiscale dataset.')
+@click.option('--nn_save_dir', prompt='nn_save_dir', 
+              help='Specify name of the directory to store the model.')
 @click.option('--nn', prompt='nn',  
               help='Specify neural network number used for making the prediction.')
 @click.option('--mode', prompt='mode', 
@@ -23,18 +25,23 @@ from utils.dataset_utils import create_preprocessed_datasets
 @click.option('--kfolds', prompt='kfolds', 
               help='Specify the number of folds for cross validation.')
 
-def preprocess_data(run_dir, nn, mode, kfolds):
-
-    nn_idx = int(nn) - 1
-
-    run_dir = '../runs/' + run_dir
+def preprocess_data(run_dir, nn_save_dir, nn, mode, kfolds):
 
     # Make the run dir
-    if not os.path.exists(run_dir):
-        os.mkdir(run_dir)
+    if not os.path.exists('../runs'):
+        os.mkdir('../runs')
         print(' --> Run directory created.')
     else:
         print(' --> Found Run directory already exists.')
+
+    nn_save_dir_path = f'../runs/{run_dir}/{nn_save_dir}'
+    if os.path.exists(nn_save_dir_path) is False:
+        os.mkdir(nn_save_dir_path)
+        print(' --> nn directory created.')
+    else:
+        print(' --> nn directory already exists.')
+
+    nn_idx = int(nn) - 1
 
     nn_params_dict = list_of_nn_params_dict[nn_idx]
     nn_train_params_dict = list_of_nn_train_params_dict[nn_idx]
@@ -49,27 +56,13 @@ def preprocess_data(run_dir, nn, mode, kfolds):
     if len(nn_datasets_dict.keys()) == 0:
         raise ValueError(' --> Provided empty dictionary nn datasets dictionary !')
 
-    global_seed = nn_train_params_dict['global_seed']
-
-    nn_save_dir = run_dir + '/' + nn_params_dict['model_type']
-
-    if os.path.exists(nn_save_dir) is False:
-        os.mkdir(nn_save_dir)
-        print(' --> nn directory created.')
-    else:
-        print(' --> nn directory already exists.')
-
     # Send all print statements to file for debugging
-    print_file_path = nn_save_dir + '/' + 'preprocess_data_out.txt'
+    print_file_path = nn_save_dir_path + '/' + 'preprocess_data_out.txt'
     sys.stdout = open(print_file_path, "w", encoding='utf-8')
 
     print(f' --> User provided command line run_dir argument : {run_dir}')
     print(f' --> User provided command line nn argument : {nn_idx}')
     print(f' --> User provided command line mode argument : {mode}')
-
-    set_global_random_seed(global_seed)
-
-    print(f' --> Set global random seed {global_seed}.')
 
     ################################################################################################
     # Preprocess user provided nn dictionaries
@@ -98,7 +91,7 @@ def preprocess_data(run_dir, nn, mode, kfolds):
             raise TypeError(f' --> Value for {_required_key} key in nn_train_params_dictionary should be of type {_required_keys_dtypes[i]}.')
         
     # Perform same check for nn_params_dict
-    _required_submodule_keys = ['connect_to'
+    _required_submodule_keys = ['connect_to',
                                 'num_nodes_per_layer',
                                 'layer_type',
                                 'layer_activation',
@@ -155,12 +148,41 @@ def preprocess_data(run_dir, nn, mode, kfolds):
         if os.path.exists(path) is False:
             raise FileNotFoundError(f' --> Unable to find {path} to read dataset from.')
         
+    global_seed = nn_train_params_dict['global_seed']
+    set_global_random_seed(global_seed)
+    print(f' --> Set global random seed {global_seed}.')
+        
+    # Save the input dictionaries to pickle
+    save_to_pickle(list_of_nn_params_dict, 'list_of_nn_params_dict.pkl', nn_save_dir_path)
+    save_to_pickle(list_of_nn_train_params_dict, 'list_of_nn_train_params_dict.pkl', nn_save_dir_path)
+    save_to_pickle(list_of_nn_datasets_dict, 'list_of_nn_datasets_dict.pkl', nn_save_dir_path)
+
+    # Save the history of all different models created in the run directory.
+    with open(nn_save_dir_path + '/' + 'run_summary.txt', 'a', encoding='utf-8') as file:
+        file.write(f'--NN params dict (Model {nn_idx})--' + '\n')
+        file.write(json.dumps(
+            list_of_nn_params_dict[nn_idx], indent=4) + '\n')
+        file.write('\n')
+
+        file.write(
+            f'--NN train params dict (Model {nn_idx})--' + '\n')
+        file.write(json.dumps(
+            list_of_nn_train_params_dict[nn_idx], indent=4) + '\n')
+        file.write('\n')
+
+        file.write(
+            f'--NN dataset dict (Model {nn_idx})--' + '\n')
+        file.write(json.dumps(
+            list_of_nn_datasets_dict[nn_idx], indent=4) + '\n')
+        file.write('\n')
+    print(' --> Saved user provided dictionaries to run_summary.txt')
+        
     test_split = nn_train_params_dict['test_split']
     if int(kfolds) > 0:
-        create_preprocessed_datasets(nn_save_dir, nn_datasets_dict, global_seed,
+        create_preprocessed_datasets(nn_save_dir_path, nn_datasets_dict, global_seed,
                                     test_split=test_split, mode=mode, kfolds=int(kfolds))
     else:
-        create_preprocessed_datasets(nn_save_dir, nn_datasets_dict, global_seed,
+        create_preprocessed_datasets(nn_save_dir_path, nn_datasets_dict, global_seed,
                                     test_split=test_split, mode=mode)
 
     print(' --> Preprocessed dataset.')

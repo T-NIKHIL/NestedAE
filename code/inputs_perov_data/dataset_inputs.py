@@ -42,7 +42,30 @@ list_of_nn_datasets_dict=[
 
             # Dataset used for making a prediction
             'predict':{
-
+                        # 'X':{
+                        #       'skiprows':None,
+                        #       'header':0,
+                        #       'path':'../datasets/PSC_efficiencies/PSC_efficiencies_dataset.csv',
+                        #       #'weight_samples':{'col_idx':3, 'nbins':50, 'scheme':'bin_prob'},
+                        #       'variables':{'all_props':{'cols':[20, # A_ion_rad
+                        #                                         21, # A_at_wt
+                        #                                         22, # A_EA
+                        #                                         23, # A_IE
+                        #                                         24, # A_En
+                        #                                         31, # B_ion_rad
+                        #                                         32, # B_at_wt
+                        #                                         33, # B_EA
+                        #                                         34, # B_IE
+                        #                                         35, # B_En
+                        #                                         42, # X_ion_rad
+                        #                                         43, # X_at_wt
+                        #                                         44, # X_EA
+                        #                                         45, # X_IE
+                        #                                         46, # X_En
+                        #                                         ], 'preprocess':'std'}
+                        #                     },
+                        #       'load_preprocessor':True
+                        #             }
                         'X':{
                               'skiprows':None,
                               'header':0,
@@ -92,7 +115,7 @@ list_of_nn_datasets_dict=[
                             },
 
                         'l':{ 'skiprows':None,
-                              'header':None,
+                              'header':None,                                  
                               'path':'../runs/perovskite_multiscale_dataset_3/ae1_bg_predictor_enc_l_12_l1_1em2_tanh_pred_p_0_1_100_relu_dec_15_linear_seed_0_lr_1em3_bs_10_1500_epochs_mae_mtl_k_fold_0_xavier_normal/submodule_outputs/predict/encoder_output.csv',
                               #'weight_samples':{'col_idx':3, 'nbins':50, 'scheme':'bin_prob'},
                               'variables':{'latents':{'cols':[0,

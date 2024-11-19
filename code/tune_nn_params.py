@@ -26,7 +26,7 @@ import os
 
 warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
 
-def run_wandb_agent(fold_num, train_dataloader, val_dataloader, accelerator):
+def run_wandb_agent(nn_save_path, fold_num, train_dataloader, val_dataloader, accelerator):
     """
     Runs the wandb agent for tuning neural network parameters.
 
@@ -43,7 +43,7 @@ def run_wandb_agent(fold_num, train_dataloader, val_dataloader, accelerator):
         None
     """
     # To start a wandb run have to call wandb.init(). At any time there can only be one active run. To finish have to call run.finish()
-    run = wandb.init(job_type='training', resume=False, reinit=False, dir=nn_save_dir+'/tune_nn_params')
+    run = wandb.init(job_type='training', resume=False, reinit=False, dir=nn_save_path+'/tune_nn_params')
     new_nn_params_dict = copy.deepcopy(nn_params_dict)
     for submodule in new_nn_params_dict['submodules'].keys():
 
@@ -88,7 +88,7 @@ def run_wandb_agent(fold_num, train_dataloader, val_dataloader, accelerator):
 
     # Get the fold number from the sweep config dictionary
 
-    model_sweep_dir = nn_save_dir + '/tune_nn_params' + '/' + run.name + '_fold_' + str(fold_num)
+    model_sweep_dir = nn_save_path + '/tune_nn_params' + '/' + run.name + '_fold_' + str(fold_num)
 
     # Create a run directory under tune_nn_params
     if not os.path.exists(model_sweep_dir):
@@ -99,7 +99,7 @@ def run_wandb_agent(fold_num, train_dataloader, val_dataloader, accelerator):
     sys.stdout = open(print_file_path, "w", encoding='utf-8')
 
     # Build the nn model
-    ae = VanillaAE(nn_save_dir, new_nn_params_dict, nn_train_params_dict, nn_datasets_dict)
+    ae = VanillaAE(nn_save_path, new_nn_params_dict, nn_train_params_dict, nn_datasets_dict)
     ae.compile()
     print(' --> Model Compilation step complete.')
 
@@ -117,12 +117,12 @@ def run_wandb_agent(fold_num, train_dataloader, val_dataloader, accelerator):
     run.finish()
     time.sleep(5)
     # Move the files from wandb directory to model sweep directory
-    os.system(f'cp -r {nn_save_dir}/tune_nn_params/wandb/*-{run.id}/* {model_sweep_dir}')
+    os.system(f'cp -r {nn_save_path}/tune_nn_params/wandb/*-{run.id}/* {model_sweep_dir}')
     # Delete the run directory from wandb directory
-    os.system(f'rm -r {nn_save_dir}/tune_nn_params/wandb/*-{run.id}')
+    os.system(f'rm -r {nn_save_path}/tune_nn_params/wandb/*-{run.id}')
     print(' --> EXIT.')
 
-def run_parallel_kfold(fold_num, sweep_config, trials_in_sweep, accelerator):
+def run_parallel_kfold(nn_save_path, fold_num, sweep_config, trials_in_sweep, accelerator):
     # Create a copy of sweep_config
     sweep_config_for_fold = copy.deepcopy(sweep_config)
     # Check if fold is present in the sweep_config name
@@ -136,27 +136,27 @@ def run_parallel_kfold(fold_num, sweep_config, trials_in_sweep, accelerator):
         count = int(trials_in_sweep)
     # Load the train and validation datsets for the fold
     train_dataset = load(
-        nn_save_dir + '/datasets' + f'/train_dataset_fold_{fold_num}.pt')
+        nn_save_path + '/datasets' + f'/train_dataset_fold_{fold_num}.pt')
     train_dataloader = DataLoader(train_dataset,
                                     batch_size=nn_train_params_dict['batch_size'],
                                     shuffle=nn_train_params_dict['shuffle_data_between_epochs'],
                                     num_workers=0)
     val_dataset = load(
-        nn_save_dir + '/datasets' + f'/val_dataset_fold_{fold_num}.pt')
+        nn_save_path + '/datasets' + f'/val_dataset_fold_{fold_num}.pt')
     val_dataloader = DataLoader(val_dataset,
                                 batch_size=nn_train_params_dict['batch_size'],
                                 shuffle=False,
                                 num_workers=0)
-    wandb.agent(sweep_id, lambda: run_wandb_agent(fold_num, train_dataloader, val_dataloader, accelerator), count=count)
+    wandb.agent(sweep_id, lambda: run_wandb_agent(nn_save_path, fold_num, train_dataloader, val_dataloader, accelerator), count=count)
     
 
 @click.command()
 @click.option('--run_dir', prompt='run_dir',
             help='Specify the run directory.')
+@click.option('--nn_save_dir', prompt='nn_save_dir',
+               help='Specify the name of directory to save the neural network model.')
 @click.option('--nn', prompt='nn',
             help='Specify the neural network to tune.')
-@click.option('--kfolds', prompt='kfolds',
-            help='Specify the number of folds for kfold cross validation.')
 @click.option('--user_name', prompt='user_name',
             help='Specify the wandb username.')
 @click.option('--project_name', prompt='project_name',
@@ -171,7 +171,7 @@ def run_parallel_kfold(fold_num, sweep_config, trials_in_sweep, accelerator):
             help='Specify the number of trials in the sweep.')
 @click.option('--accelerator', prompt='accelerator',
             help='Specify the accelerator to use.')
-def run_tune_nn_params(run_dir, nn, kfolds, user_name, project_name, sweep_type, metric, goal, trials_in_sweep, accelerator):
+def run_tune_nn_params(run_dir, nn_save_dir, nn, user_name, project_name, sweep_type, metric, goal, trials_in_sweep, accelerator):
     """
     Runs the hyperparameter tuning process for a neural network model.
 
@@ -198,16 +198,14 @@ def run_tune_nn_params(run_dir, nn, kfolds, user_name, project_name, sweep_type,
     global nn_params_dict
     global nn_train_params_dict
     global nn_datasets_dict
-    global nn_save_dir
-    global tune_nn_params_dir
 
     nn_idx = int(nn) - 1
     # Create a directory to store the hyperparameter runs
-    run_dir = '../runs'+'/'+run_dir
-    nn_save_dir = run_dir+'/'+list_of_nn_params_dict[nn_idx]['model_type']
-    tune_nn_params_dir = nn_save_dir + '/tune_nn_params'
-    if not os.path.exists(tune_nn_params_dir):
-        os.makedirs(tune_nn_params_dir)
+    run_path = '../runs'+'/'+run_dir
+    nn_save_path = run_path+'/'+nn_save_dir
+    tune_nn_params_path = nn_save_path + '/tune_nn_params'
+    if not os.path.exists(tune_nn_params_path):
+        os.makedirs(tune_nn_params_path)
 
     nn_params_dict = list_of_nn_params_dict[nn_idx]
     nn_train_params_dict = list_of_nn_train_params_dict[nn_idx]
@@ -216,22 +214,29 @@ def run_tune_nn_params(run_dir, nn, kfolds, user_name, project_name, sweep_type,
     # Set the  global random seed
     set_global_random_seed(nn_train_params_dict['global_seed'])
 
-    # Send all print statements to file for debugging
-    print_file_path = nn_save_dir + '/' + 'preprocess_data_out.txt'
-    sys.stdout = open(print_file_path, "w", encoding='utf-8')
-
-    if int(kfolds) > 0:
-        create_preprocessed_datasets(nn_save_dir, nn_datasets_dict, nn_train_params_dict['global_seed'],
-                                     test_split=nn_train_params_dict['test_split'], mode='train', kfolds=int(kfolds))
-    else:
-        create_preprocessed_datasets(nn_save_dir, nn_datasets_dict, nn_train_params_dict['global_seed'],
-                                     test_split=nn_train_params_dict['test_split'], mode='train')
+    if not os.path.exists(nn_save_path + '/datasets'):
+        # Send all print statements to file for debugging
+        print_file_path = nn_save_path + '/' + 'preprocess_data_out.txt'
+        # Close the standard output and redirect the print statements to the file
+        sys.stdout = sys.__stdout__
+        sys.stdout = open(print_file_path, "w", encoding='utf-8')
+        if 'kfolds' in nn_train_params_dict.keys():
+            create_preprocessed_datasets(nn_save_path, nn_datasets_dict, nn_train_params_dict['global_seed'],
+                                         kfolds=int(nn_train_params_dict['kfolds']))
+        else:
+            create_preprocessed_datasets(nn_save_path, nn_datasets_dict, nn_train_params_dict['global_seed'],
+                                        test_split=nn_train_params_dict['test_split'])
+        # Redirect the print statements back to the standard output
+        sys.stdout = sys.__stdout__
+        
+    
+    # Wait for write process to complete
+    time.sleep(5)
 
     params_to_tune = {}
     # Check for each submodule in nn_params_dict if a dictionary exists for any of the keys and add to sweep config.
     for submodule in nn_params_dict['submodules'].keys():
         submodule_params = copy.deepcopy(list(nn_params_dict['submodules'][submodule].keys()))
-        submodule_params.remove('connect_to')
         if 'loss' in submodule_params:
             submodule_params.remove('loss')
         for submodule_param in submodule_params:
@@ -250,7 +255,8 @@ def run_tune_nn_params(run_dir, nn, kfolds, user_name, project_name, sweep_type,
     }
 
     # The for loop is embarassingly parallel and can be run on multiple cores via multiprocessing.
-    Parallel(n_jobs=int(kfolds), backend='loky')(delayed(run_parallel_kfold)(fold_num, sweep_config, trials_in_sweep, accelerator) for fold_num in range(int(kfolds)))
+    # Parallel(n_jobs=int(kfolds), backend='loky')(delayed(run_parallel_kfold)(fold_num, sweep_config, trials_in_sweep, accelerator) for fold_num in range(int(kfolds)))
+    run_parallel_kfold(nn_save_path, 4, sweep_config, trials_in_sweep, accelerator)
 
 if __name__ == '__main__':
     nn_save_dir = None
