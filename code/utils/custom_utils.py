@@ -7,7 +7,7 @@ import pickle
 import random
 
 # User defined libraries
-from nn.vanilla_ae import VanillaAE
+from ae import AE
 
 def save_to_pickle(file, file_name, save_dir):
     """Saves a file to a pickle file"""
@@ -40,4 +40,4 @@ def set_global_random_seed(seed):
 
 def create_ae_module(nn_save_dir, nn_params_dict, nn_train_params_dict, nn_datasets_dict):
     """Creates an AutoEncoder module"""
-    return VanillaAE(nn_save_dir, nn_params_dict, nn_train_params_dict, nn_datasets_dict)
+    return AE(nn_save_dir, nn_params_dict, nn_train_params_dict, nn_datasets_dict)

@@ -1,6 +1,6 @@
 """ Training script """
 
-from nn.vanilla_ae import VanillaAE
+from ae import AE
 from utils.dataset_utils import *
 from utils.nn_utils import create_callback_object
 from utils.custom_utils import set_global_random_seed, read_from_pickle, save_to_pickle

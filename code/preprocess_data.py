@@ -27,19 +27,26 @@ from utils.dataset_utils import create_preprocessed_datasets
 
 def preprocess_data(run_dir, nn_save_dir, nn, mode, kfolds):
 
-    # Make the run dir
+    # Make the dir to contain all the runs 
     if not os.path.exists('../runs'):
         os.mkdir('../runs')
-        print(' --> Run directory created.')
+        print(' --> ../runs directory created.')
     else:
-        print(' --> Found Run directory already exists.')
+        print(' --> ../runs directory already exists.')
+
+    # Make the run dir
+    if not os.path.exists(f'../runs/{run_dir}'):
+        os.mkdir(f'../runs/{run_dir}')
+        print(f' --> ../runs/{run_dir} directory created.')
+    else:
+        print(f' --> ../runs/{run_dir} directory already exists.')
 
     nn_save_dir_path = f'../runs/{run_dir}/{nn_save_dir}'
     if os.path.exists(nn_save_dir_path) is False:
         os.mkdir(nn_save_dir_path)
-        print(' --> nn directory created.')
+        print(f' --> ../runs/{run_dir}/{nn_save_dir} directory created.')
     else:
-        print(' --> nn directory already exists.')
+        print(f' --> ../runs/{run_dir}/{nn_save_dir} directory already exists.')
 
     nn_idx = int(nn) - 1
 

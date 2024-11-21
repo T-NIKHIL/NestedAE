@@ -15,15 +15,15 @@ import os
 from utils.nn_utils import check_dict_key_exists, get_module_input_dim
 from utils.nn_utils import set_layer_activation, set_layer_dropout, set_layer_init, create_loss_object, create_optimizer_object, create_scheduler_object
 
-class VanillaAE(pl.LightningModule):
-    """VanillaAE class"""
+class AE(pl.LightningModule):
+    """AE class"""
     def __init__(self,
                  nn_save_dir,
                  nn_params_dict,
                  nn_train_params_dict,
                  nn_datasets_dict):
 
-        super(VanillaAE, self).__init__()
+        super(AE, self).__init__()
 
         # Save the parameters passed into __init__
         self.save_hyperparameters()

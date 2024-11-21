@@ -9,9 +9,13 @@ import torch
 from torch.utils.data import Dataset
 from sklearn.preprocessing import OneHotEncoder, LabelBinarizer, StandardScaler, LabelEncoder
 from sklearn.model_selection import KFold, train_test_split
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
+from sklearn.model_selection import GridSearchCV
+import matplotlib.pyplot as plt
 
 from utils.nn_utils import check_dict_key_exists
-
 
 class CreateDataset(Dataset):
     """ Creates a PyTorch Dataset. """
@@ -312,7 +316,6 @@ def create_preprocessed_datasets(nn_save_dir, nn_dataset_dict, global_seed, test
                 samples_preview = samples
             else:
                 samples_preview = np.hstack((samples_preview, samples))
-
             dataset[variable_name] = samples
             tensor_dataset[variable_name] = torch.tensor(
                 samples, dtype=torch.float32)
@@ -325,7 +328,6 @@ def create_preprocessed_datasets(nn_save_dir, nn_dataset_dict, global_seed, test
             all_variable_names.append('sample_wts')
             # Add the sample wts to the preview
             samples_preview = np.hstack((samples_preview, sample_wts))
-            dataset['sample_wts'] = sample_wts
             tensor_dataset['sample_wts'] = torch.tensor(
                 sample_wts, dtype=torch.float32)
             variable_preprocessors['sample_wts'] = None
@@ -362,7 +364,6 @@ def create_preprocessed_datasets(nn_save_dir, nn_dataset_dict, global_seed, test
         torch.save(tensor_dataset, dataset_save_dir + '/' + pickle_file_name)
     else:
         raise ValueError(f'Invalid mode specified {mode}.')
-
 
 def create_kfold_datasets(dataset, n_splits, variable_preprocessors, global_seed=0, dataset_name=None, dataset_save_dir='.'):
     """ Creates kfold datasets from the dataset provided."""
@@ -435,65 +436,113 @@ def create_kfold_datasets(dataset, n_splits, variable_preprocessors, global_seed
 
 def create_train_val_datasets(dataset, test_split, variable_preprocessors, global_seed=0, dataset_name=None, dataset_save_dir='.'):
     """ Creates a train and test list consisting of the train and test numpy arrays respectively."""
-    # Create a dictionary to store the train and val datasets
-    train_tensor_dataset = {}
-    val_tensor_dataset = {}
-    # Create a dictionary to store the variable shapes for each dataset
+
+    # Step 1 : Dimensionality reduction on the dataset using PCA to improve clustering
+    pca = PCA(n_components=2, random_state=global_seed)
+    feats_list = [dataset[key] for key in dataset.keys()]
+    for i,feat_list in enumerate(feats_list):
+        if i == 0:
+            numpy_dataset = feat_list
+        else:
+            numpy_dataset = np.hstack((numpy_dataset, feat_list))
+    pca_coords = pca.fit_transform(numpy_dataset)
+    plt.scatter(pca_coords[:, 0], pca_coords[:, 1])
+    plt.savefig(dataset_save_dir + '/2d_pca.png')
+
+    # Step 2 : KMeans on the PCA coords
+    kmeans_param_grid = {"n_clusters":range(2,100)}
+
+    def kmeans_silhouette_score(estimator, X):
+        y_pred = estimator.predict(X)
+        return silhouette_score(X, y_pred)
+
+    def kmeans_calinski_harabasz_score(estimator, X):
+        y_pred = estimator.predict(X)
+        return calinski_harabasz_score(X, y_pred)
+
+    def kmeans_davies_bouldin_score(estimator, X):
+        y_pred = estimator.predict(X)
+        return davies_bouldin_score(X, y_pred)
+
+    grid_search_kmeans = GridSearchCV(
+        KMeans(n_init=10, max_iter=300, random_state=global_seed), 
+        param_grid=kmeans_param_grid, 
+        scoring=kmeans_silhouette_score)
+    grid_search_kmeans.fit(pca_coords)
+    df_grid_search_kmeans_results = pd.DataFrame(grid_search_kmeans.cv_results_)[
+        ["param_n_clusters", "mean_test_score"]
+    ]
+    print(f' --> KMeans clustering results')
+    print(df_grid_search_kmeans_results.sort_values(by="mean_test_score", ascending=False))
+
+    # Step 3 : Predict the clusters each PCA coord belongs to for the best kmeans model
+    cluster_preds = grid_search_kmeans.best_estimator_.predict(pca_coords)
+    # cluster_preds = KMeans(n_clusters=29).fit_predict(X_pca)
+    plt.scatter(pca_coords[:, 0], pca_coords[:, 1], c=cluster_preds)
+    plt.savefig(dataset_save_dir + '/2d_pca_clustered.png')
+
+    # Step 4 : Splitting the data in each cluster into train and test based on the test_split
+    X_train = []
+    X_val = []
+    for cluster in np.unique(cluster_preds):
+        pca_coords_for_cluster = pca_coords[cluster_preds == cluster]
+        X_train_cluster, X_test_cluster = train_test_split(pca_coords_for_cluster, test_size=test_split, random_state=global_seed)
+        X_train.append(X_train_cluster)
+        X_val.append(X_test_cluster)
+    X_train = np.concatenate(X_train)
+    X_val = np.concatenate(X_val)
+
+    # Step 5 : Invert the coords back to original feature space dimension
+    X_train_inv = pca.inverse_transform(X_train)
+    X_val_inv = pca.inverse_transform(X_val)
+
+    # Step 6 : Converting X train_inv and X_val_inv into tensor_dataset format
+    train_tensor_dataset = {key:torch.tensor(value, dtype=torch.float32).reshape(-1, 1)
+                     for key, value in zip(dataset.keys(), X_train_inv.T)}
+    val_tensor_dataset = {key:torch.tensor(value, dtype=torch.float32).reshape(-1, 1)
+                   for key, value in zip(dataset.keys(), X_val_inv.T)}
+
+    # Step 7 : Create PyTorch datasets
     train_var_shapes = {}
     val_var_shapes = {}
     train_var_dtypes = {}
     val_var_dtypes = {}
-    i = 0
-    for variable_name, samples in zip(dataset.keys(), dataset.values()):
-        train_samples, val_samples = train_test_split(
-            samples, test_size=test_split, random_state=global_seed)
-        train_tensor_dataset[variable_name] = torch.tensor(
-            train_samples, dtype=torch.float32)
-        val_tensor_dataset[variable_name] = torch.tensor(
-            val_samples, dtype=torch.float32)
-        if i == 0:
-            train_samples_preview = train_samples
-            val_samples_preview = val_samples
-        else:
-            train_samples_preview = np.hstack(
-                (train_samples_preview, train_samples))
-            val_samples_preview = np.hstack((val_samples_preview, val_samples))
+    for variable_name in dataset.keys():
+        train_samples = train_tensor_dataset[variable_name]
+        val_samples = val_tensor_dataset[variable_name]
         train_var_shapes[variable_name] = train_samples.shape
+        print(train_samples.shape)
         val_var_shapes[variable_name] = val_samples.shape
         train_var_dtypes[variable_name] = train_samples.dtype
         val_var_dtypes[variable_name] = val_samples.dtype
-        # Store the train and validation datasets
-        ae_train_dataset = CreateDataset(name=dataset_name,
-                                             dataset=train_tensor_dataset,
-                                             variable_names=list(dataset.keys()),
-                                             variable_preprocessors=variable_preprocessors,
-                                             variable_dtypes=train_var_dtypes,
-                                             variable_shapes=train_var_shapes)
-        pickle_file_name = 'train_dataset.pt'
-        torch.save(ae_train_dataset, dataset_save_dir +
-                '/' + pickle_file_name)
-        ae_val_dataset = CreateDataset(name=dataset_name,
-                                        dataset=val_tensor_dataset,
+    ae_train_dataset = CreateDataset(name=dataset_name,
+                                        dataset=train_tensor_dataset,
                                         variable_names=list(dataset.keys()),
                                         variable_preprocessors=variable_preprocessors,
-                                        variable_dtypes=val_var_dtypes,
-                                        variable_shapes=val_var_shapes)
-        pickle_file_name = 'val_dataset.pt'
-        torch.save(ae_val_dataset, dataset_save_dir +
-                    '/' + pickle_file_name)
-        print(' --> Saved dataset to pickle under /datasets directory.')
-        # Save the train and val samples preview to a csv
-        preview_file_name = 'train_dataset_preview.csv'
-        np.savetxt(dataset_save_dir + '/' + preview_file_name,
-                train_samples_preview, delimiter=',')
-        preview_file_name = 'val_dataset_preview.csv'
-        np.savetxt(dataset_save_dir + '/' + preview_file_name,
-                val_samples_preview, delimiter=',')
-        print(' --> Created train and val datasets for dataset.')
-        print(f' --> Number of variables in dataset {len(dataset)}.')
-        print(f' --> Train dataset shape : {train_var_shapes}.')
-        print(f' --> Val dataset shape :{val_var_shapes}.')
-        i += 1
+                                        variable_dtypes=train_var_dtypes,
+                                        variable_shapes=train_var_shapes)
+    pickle_file_name = 'train_dataset.pt'
+    torch.save(ae_train_dataset, dataset_save_dir +
+                '/' + pickle_file_name)
+    ae_val_dataset = CreateDataset(name=dataset_name,
+                                    dataset=val_tensor_dataset,
+                                    variable_names=list(dataset.keys()),
+                                    variable_preprocessors=variable_preprocessors,
+                                    variable_dtypes=val_var_dtypes,
+                                    variable_shapes=val_var_shapes)
+    pickle_file_name = 'val_dataset.pt'
+    torch.save(ae_val_dataset, dataset_save_dir +
+                '/' + pickle_file_name)
+    print(' --> Saved dataset to pickle under /datasets directory.')
+    # Save the train and val samples preview to a csv
+    preview_file_name = 'train_dataset_preview.csv'
+    np.savetxt(dataset_save_dir + '/' + preview_file_name, X_train_inv, delimiter=',')
+    preview_file_name = 'val_dataset_preview.csv'
+    np.savetxt(dataset_save_dir + '/' + preview_file_name, X_val_inv, delimiter=',')
+    print(' --> Created train and val datasets for dataset.')
+    print(f' --> Number of variables in dataset {len(dataset)}.')
+    print(f' --> Train dataset shape : {train_var_shapes}.')
+    print(f' --> Val dataset shape :{val_var_shapes}.')
 
 def weight_samples(dataframe, dataset_dict):
     """ Weight samples based on provided weighting scheme."""
