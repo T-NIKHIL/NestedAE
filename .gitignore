@@ -1,3 +1,4 @@
 .DS_Store
 runs
-inputs_*/
+inputs_*
+wandb_api_key.py
