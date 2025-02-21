@@ -1,4 +1,6 @@
 .DS_Store
 runs
-inputs_*
+datasets
+inputs_old
 wandb_api_key.py
+python_venvs
