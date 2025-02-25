@@ -1,88 +1,61 @@
 """ Predict script """
-
-import logging
-logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 import os
 import sys
+import pickle
+import random
 
 import click
-import torch 
-from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
-from pytorch_lightning import Trainer
+from torch import manual_seed, load
 import numpy as np
+from pytorch_lightning import seed_everything
 
-from ..ae import AE
-from .custom_utils import set_global_random_seed, read_from_pickle
+from NestedAE.ae import AE
+
+def set_global_random_seed(seed):
+    """Sets the global random seed."""
+    # Pytorch lightning function to seed RNG for everything
+    # Setting workers=True, Lightning derives unique seeds 
+    # 1. across all dataloader workers and processes for torch
+    # 2. numpy and stdlib random number generators
+    seed_everything(seed, workers=True)
+    # Seeds RNG for all devices (CPU and GPU)
+    manual_seed(seed)
+    # Sets the random seed for python
+    random.seed(seed)
+    # Sets the random seed in numpy library
+    np.random.seed(seed)
 
 @click.command()
-@click.option('--run_dir', prompt='run_dir', help='Specify the run dir where the model is located.')
-@click.option('--nn', prompt='nn', help='Specify neural network number used for making the prediction.')
+@click.option('--ae_save_dir', prompt='nn', help='Directory where the AE is saved.')
 @click.option('--accelerator', prompt='accelerator', help='Specify the type of acceleration to use.')
-@click.option('--submodule', prompt='submodule', help='Enter a submodule.')
-
-def predict(run_dir, nn, accelerator, submodule):
+@click.option('--module', prompt='module', help='Enter the submodule from which to get predictions.')
+def run_predict(ae_save_dir, accelerator, module):
     """ Predict script"""
-    
-    nn_idx = int(nn) - 1
-
-    run_dir = '../runs/' + run_dir
-
-    list_of_nn_params_dict = read_from_pickle('list_of_nn_params_dict.pkl', run_dir)
-    list_of_nn_train_params_dict = read_from_pickle('list_of_nn_train_params_dict.pkl', run_dir)
-    list_of_nn_datasets_dict = read_from_pickle('list_of_nn_datasets_dict.pkl', run_dir)
-
-    nn_params_dict = list_of_nn_params_dict[nn_idx]
-    nn_train_params_dict = list_of_nn_train_params_dict[nn_idx]
-    nn_datasets_dict = list_of_nn_datasets_dict[nn_idx]
-
+    nn_params_dict = pickle.load(open(ae_save_dir + '/nn_params_dict.pkl', 'rb'))
+    nn_train_params_dict = pickle.load(open(ae_save_dir + '/nn_train_params_dict.pkl', 'rb'))
     global_seed = nn_train_params_dict['global_seed']
-
-    nn_save_dir = run_dir + '/' + nn_params_dict['model_type']
-
     # Send all print statements to file for debugging
-    print_file_path = nn_save_dir + '/' + 'predict_out.txt'
+    print_file_path = ae_save_dir + '/' + 'predict_out.txt'
     sys.stdout = open(print_file_path, "w")
-
-    print(f' --> User provided command line run_dir argument : {run_dir}')
-    print(f' --> User provided command line nn idx argument : {nn_idx}')
-    print(f' --> User provided command line accelerator argument : {accelerator}')
-    print(f' --> User provided command line submodule argument : {submodule}')
-
     set_global_random_seed(global_seed)
-
-    print(f' --> Set global random seed {global_seed}.')
-
-    # Pytorch accelerator information
-    print(f' --> Number of threads : {torch.get_num_threads()}')
-    print(f' --> Number of interop threads : {torch.get_num_interop_threads()}')
-
     # Create a blank ae
-
-    new_ae = AE(nn_save_dir,
+    new_ae = AE(ae_save_dir,
                 nn_params_dict,
                 nn_train_params_dict,
-                nn_datasets_dict)
-
+                '../datasets/combined_predict_datasets.pt')
     # Load the weights from the latest checkpoint
-    chpt_path = nn_save_dir + '/checkpoints/last.ckpt'
+    chpt_path = f'{ae_save_dir}/checkpoints/last.ckpt'
     loaded_ae = new_ae.load_from_checkpoint(chpt_path)
-
     # Call the model on predict  dataset
-    predict_dataset_dir = nn_save_dir + '/datasets/predict_dataset.pt'
-    predict_dataset = torch.load(predict_dataset_dir)
-
-    submodule_outputs_from_loaded = loaded_ae(predict_dataset)
-
-    submodule_outputs_dir = nn_save_dir + '/submodule_outputs'
-    if not os.path.exists(submodule_outputs_dir + '/predict'):
-        os.mkdir(submodule_outputs_dir + '/predict')
-
-    submodule_outputs = submodule_outputs_from_loaded[submodule].detach().numpy()
-    
-    filename = submodule + '_output.csv'
-    np.savetxt(submodule_outputs_dir + '/predict/' + filename, 
-               submodule_outputs, 
-               delimiter=',')
+    predict_dataset_dir = '../datasets/predict_dataset.pt'
+    predict_dataset = load(predict_dataset_dir)
+    module_outputs_from_loaded = loaded_ae(predict_dataset)
+    module_outputs_dir = f'{ae_save_dir}/ae_module_outputs'
+    if not os.path.exists(module_outputs_dir + '/predict'):
+        os.mkdir(module_outputs_dir + '/predict')
+    module_output = module_outputs_from_loaded[module].detach().numpy()
+    filename = module + '_output.csv'
+    np.savetxt(module_outputs_dir + '/predict/' + filename, module_output, delimiter=',')
 
 if __name__ == '__main__':
-    predict()
+    run_predict()

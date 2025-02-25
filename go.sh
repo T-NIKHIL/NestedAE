@@ -18,7 +18,7 @@ dataset_type=train
 ## Specify accelerator to use. cpu or gpu
 accelerator=cpu
 ## Name of submodule from which predictions are required. (only active for predict mode)
-submodule=bg_pred
+module=bg_pred
 
 ## Training using wandb
 user_name=nthota2
@@ -51,7 +51,7 @@ fi
 
 if [[ $mode == predict ]]; then
 	echo "In predict mode"
-	python3 predict.py --run_dir $run_dir --ae_save_dir $ae_save_dir --ae_idx $ae_idx --accelerator $accelerator --submodule $submodule
+	python3 predict.py --run_dir $run_dir --ae_save_dir $ae_save_dir --ae_idx $ae_idx --accelerator $accelerator --module $module
 fi
 
 

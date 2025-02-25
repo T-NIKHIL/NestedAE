@@ -4,7 +4,6 @@ import os
 import sys
 import copy
 import random
-import json
 import pickle
 
 import numpy as np
