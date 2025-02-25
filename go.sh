@@ -7,12 +7,12 @@
 ## Specify folder to look at for the input files
 inputs_dir=inputs_perov_data
 ## Specify folder to save the NestedAE outputs to
-run_dir=test
+run_dir=perovskite_multiscale_dataset_v4
 ae_save_dir=ae1
 ## Which neural network to use for training or inference
 ae_idx=0
 ## Specify mode of operation. preprocess, train or predict 
-mode=preprocess
+mode=train
 ## Specify dataset type. train or predict (only active for preprocess mode)
 dataset_type=train
 ## Specify accelerator to use. cpu or gpu
@@ -29,10 +29,6 @@ goal=minimize
 trials_in_sweep=-1 # -1 for all trials
 
 # <-- USER END -->
-
-if [[ ! -d ../runs ]]; then
-    mkdir ../runs
-fi
 
 ## The inputs directory can be any name.
 ## The code copies inputs_dir to inputs.

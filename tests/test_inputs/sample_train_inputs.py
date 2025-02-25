@@ -29,6 +29,18 @@ def sample_nn_train_params_dict():
                 # Required
                 # Desc : Optimizer type and learning rate for each module
                 # Supported input type : dict
+            'scheduler':{
+                'type':'step',
+                'step_size':100,
+                'gamma':0.1,
+                'name':'step_lr_scheduler', 
+                'monitor':'tot_val_loss',
+                'frequency':100},
+                # Optional
+                # Desc : Scheduler type and parameters. 
+                #        If set please look at the supported key options in the nn_utils::create_scheduler_object
+                #        'name', 'monitor' and 'frequency' are required keys for setting any lr scheduler. Please refer to pytorch website for more details.
+                # Supported input type : dict
             'callbacks':{'model_checkpoint':{'monitor':'total_val_loss', #Optional 
                                              'save_top_k':1,
                                              'mode':'min'}}

@@ -1,4 +1,6 @@
 import pytest
+from torch import nn
+from torchmetrics import MeanAbsoluteError
 
 '''
 * This sample_nn_params_dict lists the dictionary
@@ -52,20 +54,20 @@ def sample_nn_params_dict():
                         # Desc : Number of nodes in output layer
                         # Supported input type : int
                     'hidden_dim':25, 
-                        # Required
-                        # Desc : int
-                        # Supported input type : int
+                        # Optional (default is None)
+                        # Desc : Number of nodes in hidden layer. If no hidden layer, set to None
+                        # Supported input type : int/None
                     'hidden_layers':1, 
-                        # Required
-                        # Desc : Number of hidden layers
-                        # Supported input type : int
-                    'hidden_activation':'tanh', 
+                        # Optional (default is 0)
+                        # Desc : Number of hidden layers. If no hidden layer, set to None
+                        # Supported input type : int/None
+                    'hidden_activation':nn.Tanh(), 
                         # Optional (default is None)
                         # Desc : Activation function for each layer. 
                         #        Please check set_layer_activation() in nn_utils.py 
                         #        for supported activations.
-                        # Supported input type : str
-                    'output_activation':'tanh', 
+                        # Supported input type : to
+                    'output_activation':nn.Tanh(), 
                         # Optional (default is None)
                         # Desc : Activation function for each layer. 
                         #        Please check set_layer_activation() in nn_utils.py 
@@ -95,7 +97,7 @@ def sample_nn_params_dict():
                         # Optional (default is 0) 
                         # Desc : L2 Weight regularization.
                         # Supported input type : float
-                    'layer_dropout':{'type':'Dropout', 'p':0.1},
+                    'layer_dropout':nn.Dropout(p=0.5),
                         # Optional (default is None) 
                         # Desc : Dropout after each layer
                         #        Please check set_layer_dropout() in nn_utils.py
@@ -122,16 +124,16 @@ def sample_nn_params_dict():
                 'predictor':{
                     'connect_to':['encoder'],
                     'output_dim':1,
-                    'output_activation':'relu',
+                    'output_activation':nn.ReLU(),
                     'hidden_dim':25,
                     'hidden_layers':1,
-                    'loss':{'type':'mae', 
+                    'loss':{'type':nn.L1Loss(), 
                             'wt':1,
                             'target':'target'},
                     # Optional
                     # Desc : Loss dictionary
                     # Supported input type : dict
-                    'metric':['mae']
+                    'metric':[MeanAbsoluteError()],
                     # Optional
                     # Desc : Type of metric to use for reporting
                     # Supported input type : list
@@ -142,8 +144,8 @@ def sample_nn_params_dict():
                     'output_dim':15,
                     'hidden_dim':25,
                     'hidden_layers':1,
-                    'hidden_activation':'tanh',
-                    'loss':{'type':'mae',
+                    'hidden_activation':nn.Tanh(),
+                    'loss':{'type':nn.L1Loss(),
                            'wt':1,
                            'target':'desc1'}}
                 }

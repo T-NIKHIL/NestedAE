@@ -40,8 +40,7 @@ def check_dict_key_exists(key, dictionary):
 
     Returns: True if key exists in dictionary, False otherwise
     """
-    if (key in list(dictionary.keys())) and \
-        (dictionary[key] is not None):
+    if (key in list(dictionary.keys())):
         return True
     return False
 
@@ -67,204 +66,81 @@ def get_module_input_dim(connect_to, nn_params_dict, desc_shapes):
         tot_input_dim += input_dim
     return tot_input_dim 
 
-def set_layer_init(layer_list, module_dict):
+def set_layer_init(layer_list, module_dict, init='kernel'):
     """Initialize layer weights and biases.
     
     Args:
         layer_list (list) : list of torch.nn.Linear layers
         module_dict (dict) : dictionary containing module parameters
-
+        init (str) : kernel/bias
     Returns :
         layer_list (list) : list of torch.nn.Linear layers with initialized weights and biases
     """
     layers = [layer for layer in layer_list \
                 if isinstance(layer, nn.modules.linear.Linear)]
     # Calculating gain for xavier init of hidden layers
-    if module_dict['hidden_activation'] == 'relu':
-        hidden_gain = math.sqrt(2)
-    elif module_dict['hidden_activation'] == 'tanh':
-        hidden_gain = 5.0 / 3
+    if check_dict_key_exists('hidden_activation', module_dict):
+        if module_dict['hidden_activation'] == 'relu':
+            hidden_gain = math.sqrt(2)
+        elif module_dict['hidden_activation'] == 'tanh':
+            hidden_gain = 5.0 / 3
+        else:
+            hidden_gain = 1
     else:
         hidden_gain = 1
-
     # Calculating gain for xavier init of output layer
-    if 'output_activation' in list(module_dict.keys()):
+    if check_dict_key_exists('output_activation', module_dict):
         if module_dict['output_activation'] == 'relu':
             out_gain = math.sqrt(2)
-        if module_dict['output_activation'] == 'tanh':
+        elif module_dict['output_activation'] == 'tanh':
             out_gain = 5.0 / 3
+        else:
+            out_gain = 1
     else:
         out_gain = 1
 
-    kernel_init_type = module_dict['layer_kernel_init']
-    bias_init_type = module_dict['layer_bias_init']
+    if init == 'kernel':
+        init_type = module_dict['layer_kernel_init']
+    else:
+        init_type = module_dict['layer_bias_init']
 
     for i, layer in enumerate(layers):
-        if '_' in kernel_init_type:
-            scheme, distribution = kernel_init_type.split('_')[0], kernel_init_type.split('_')[1]
+        if init == 'kernel':
+            layer_params = layer.weight
+        else:
+            layer_params = layer.bias
+
+        if '_' in init_type:
+            scheme, distribution = init_type.split('_')[0], init_type.split('_')[1]
             # Use only with relu or leaky_relu
             if scheme == 'kaiming' and distribution == 'uniform':
-                nn.init.kaiming_uniform_(layer.weight, mode='fan_in')
+                nn.init.kaiming_uniform_(layer_params, mode='fan_in')
             elif scheme == 'kaiming' and distribution == 'normal':
-                nn.init.kaiming_normal_(layer.weight, mode='fan_in')
+                nn.init.kaiming_normal_(layer_params, mode='fan_in')
             elif scheme == 'xavier' and distribution == 'uniform':
-                if i == module_dict['hidden_layers']:
-                    nn.init.xavier_uniform_(layer.weight, gain=out_gain)
+                if i == len(layers) - 1:
+                    nn.init.xavier_uniform_(layer_params, gain=out_gain)
+                    print(f' --> Setting out layer {init} init with {scheme} {distribution} distribution with gain {out_gain}')
                 else:
-                    nn.init.xavier_uniform_(layer.weight, gain=hidden_gain)
+                    nn.init.xavier_uniform_(layer_params, gain=hidden_gain)
+                    print(f' --> Setting hidden layer {init} init with {scheme} {distribution} distribution with gain {out_gain}')
             else:
-                if i == module_dict['hidden_layers']:
-                    nn.init.xavier_normal_(layer.weight, gain=out_gain)
+                if i == len(layers) - 1:
+                    nn.init.xavier_normal_(layer_params, gain=out_gain)
+                    print(f' --> Setting out layer {init} init with {scheme} {distribution} distribution with gain {out_gain}')
                 else:
-                    nn.init.xavier_normal_(layer.weight, gain=hidden_gain)
-        elif kernel_init_type[i] == 'normal':
-            nn.init.normal_(layer.weight, mean=0, std=1)
-        elif kernel_init_type[i] == 'uniform':
-            nn.init.uniform_(layer.weight, a=0, b=1)
+                    nn.init.xavier_normal_(layer_params, gain=hidden_gain)
+                    print(f' --> Setting out layer {init} init with {scheme} {distribution} distribution with gain {out_gain}')
+        elif init_type == 'normal':
+            nn.init.normal_(layer_params, mean=0, std=1)
+        elif init_type == 'uniform':
+            nn.init.uniform_(layer_params, a=0, b=1)
+        elif init_type == 'zeros':
+            nn.init.zeros_(layer_params)
         else:
-            raise ValueError(' --> Provided weight init scheme not among defined kernel init schemes !')
-
-    # Initialize bias from one of the simple initialization schemes
-    for i, layer in enumerate(layers):
-        if '_' in bias_init_type:
-            scheme, distribution = bias_init_type.split('_')[0], bias_init_type.split('_')[1]
-            # Fan in and fan out can not be computed for tensor with fewer than 2 dimensions
-            if scheme == 'xavier' and distribution == 'uniform':
-                if i == module_dict['hidden_layers']:
-                    nn.init.xavier_uniform_(layer.bias, gain=out_gain)
-                else:
-                    nn.init.xavier_uniform_(layer.bias, gain=hidden_gain)
-            else:
-                if i == module_dict['hidden_layers']:
-                    nn.init.xavier_normal_(layer.bias, gain=out_gain)
-                else:
-                    nn.init.xavier_normal_(layer.bias, gain=hidden_gain)
-        elif bias_init_type == 'zeros':
-            nn.init.zeros_(layer.bias)
-        elif bias_init_type == 'uniform':
-            in_dim = layer.weight.size(1)
-            nn.init.uniform_(layer.bias, a=-math.sqrt(1/in_dim), b=math.sqrt(1/in_dim))
-        else:
-            raise ValueError(' --> Provided bias init scheme not among defined bias init schemes !')
-
-    return layer_list
-
-def set_layer_activation(activation):
-    """Set layer activation function.
-
-    Args:
-        activation (str) : string specifying the activation function
-
-    Returns : activation_obj (torch.nn.modules.activation)
-    """
-    if activation == 'relu':
-        return nn.ReLU()
-    elif activation == 'leaky_relu':
-        return nn.LeakyReLU(negative_slope=0.5)
-    elif activation == 'elu':
-        return nn.ELU(alpha=1.0)
-    elif activation == 'prelu':
-        return nn.PReLU(num_parameters=1, init=0.25)
-    elif activation == 'selu':
-        return nn.SELU()
-    elif activation == 'sigmoid':
-        return nn.Sigmoid()
-    elif activation == 'softmax':
-        return nn.Softmax(dim=-1)
-    elif activation == 'logsoftmax':
-        return nn.LogSoftmax(dim=-1)
-    elif activation == 'softsign':
-        return nn.Softsign()
-    elif activation == 'tanh':
-        return nn.Tanh()
-    elif activation == 'hardtanh':
-        return nn.Hardtanh(min_val=-2, max_val=2)
-    elif activation == 'tanhshrink':
-        return nn.Tanhshrink()
-    elif activation == 'softplus':
-        return nn.Softplus(beta=5, threshold=20)
-    elif activation == 'silu':
-        return nn.SiLU()
-    else:
-        raise ValueError(f' --> {activation} not among defined activation functions !')
-
-def set_layer_dropout(dropout_type, p):
-    """Set layer dropout.
-
-    Args:
-        dropout_type (str) : string specifying the dropout function
-        p (float) : dropout probability
-    
-    Returns : dropout_obj (torch.nn.modules.dropout)
-    """
-    if dropout_type == 'Dropout':
-        return nn.Dropout(p=p)
-    elif dropout_type == 'AlphaDropout':
-        return nn.AlphaDropout(p=p)
-    else:
-        raise ValueError(f' --> {dropout_type} not among defined dropout functions !')
-
-def create_loss_object(loss):
-    """Create loss object.
-
-    Args : 
-        loss (str) : a string specifying the loss function
+            raise ValueError(' --> Provided init scheme not among defined init schemes !')
         
-    Returns : loss_obj (torch.nn.modules.loss)
-    """
-    if loss == 'mae':
-        return nn.L1Loss()
-    elif loss == 'mse':
-        return nn.MSELoss()
-    elif loss == 'huber':
-        return nn.HuberLoss()
-    elif loss == 'hinge':
-        return nn.HingeEmbeddingLoss()
-    elif loss == 'kld':
-        return nn.KLDivLoss()
-    elif loss == 'nll':
-        return nn.NLLLoss(reduction='mean')
-    elif loss == 'ce':
-        return nn.CrossEntropyLoss(reduction='mean')
-    elif loss == 'bce':
-        # Reduction : Mean (The mean loss of a batch is calculated)
-        # Reduction : Sum (The loss is summed over the batch)
-        return nn.BCELoss(reduction='mean')
-    elif loss == 'bcewithlogits':
-        # Reduction : Mean (The mean loss of a batch is calculated)
-        # Reduction : Sum (The loss is summed over the batch)
-        return nn.BCEWithLogitsLoss(reduction='mean')
-    elif loss == 'name_of_loss':
-        #tf_loss = nameOfLoss()
-        raise ValueError(' --> Loss Not Implemented !')
-    else:
-        raise ValueError(f' --> {loss} not among defined losses !')
-    
-def create_metric_object(metric, num_classes=None):
-    """Create metric object.
-    
-    Args:
-        metric (str) : a string specifying the metric function
-
-    Returns : metric_obj 
-    """
-    # NOTE :
-    # -> Best result is 0. Bad predictions can lead to arbitrarily large values.
-    # -> This occurs when the target is close to 0. MAPE returns a large number instead of inf
-    if metric == 'mape':
-        return MeanAbsolutePercentageError()
-    elif metric=='rmse':
-        return MeanSquaredError(squared=False)
-    elif metric == 'mse':
-        return MeanSquaredError(squared=True)
-    elif metric == 'mae':
-        return MeanAbsoluteError()
-    elif metric == 'ce':
-        return Accuracy(task="multilabel", num_labels=num_classes, average='macro')
-    elif metric == 'bcewithlogits':
-        metric = Accuracy(task="binary", threshold=0.5)
-    else:
-        raise NotImplementedError(f' --> {metric} not among defined metrics !')
+    return layer_list
 
 def create_scheduler_object(optimizer, nn_train_params_dict):
     """Create scheduler.
@@ -280,21 +156,21 @@ def create_scheduler_object(optimizer, nn_train_params_dict):
         lr_scheduler = optim.lr_scheduler.ExponentialLR(optimizer=optimizer,
                                                                 gamma=gamma,
                                                                 verbose=True)
-    if nn_train_params_dict['scheduler']['type'] == 'step':
+    elif nn_train_params_dict['scheduler']['type'] == 'step':
         step_size = nn_train_params_dict['scheduler']['step_size']
         gamma = nn_train_params_dict['scheduler']['gamma'] 
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer,
                                                         step_size=step_size,
                                                         gamma=gamma,
                                                         verbose=True)
-    if nn_train_params_dict['scheduler']['type'] == 'multi_step':
+    elif nn_train_params_dict['scheduler']['type'] == 'multi_step':
         milestones = nn_train_params_dict['scheduler']['milestones']
         gamma = nn_train_params_dict['scheduler']['gamma']        
         lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer,
                                                             milestones=milestones,
                                                             gamma=gamma,
                                                             verbose=True)
-    if nn_train_params_dict['scheduler']['type'] == 'reduce_lr_on_plateau':
+    elif nn_train_params_dict['scheduler']['type'] == 'reduce_lr_on_plateau':
         mode = nn_train_params_dict['scheduler']['mode']
         factor = nn_train_params_dict['scheduler']['factor']
         patience = nn_train_params_dict['scheduler']['patience']

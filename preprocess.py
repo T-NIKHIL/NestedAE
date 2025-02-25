@@ -3,23 +3,23 @@
 import os
 import random
 
+import click
 from numpy import random as np_random # type: ignore
+from numpy import round as np_round # type: ignore
 from numpy import hstack, concatenate, split, savetxt # type: ignore
 from pytorch_lightning import seed_everything # type: ignore
 from torch import float32 as torch_float32 # type: ignore
-from torch import manual_seed, tensor
+from torch import manual_seed, tensor, save
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.cluster import SpectralClustering
 import matplotlib.pyplot as plt
 from scipy.stats import ks_2samp
 
-from NestedAE.dataset_utils import check_nn_datasets_dict, preprocess_datasets, TensorDataset
-from NsetedAE.nn_utils import check_nn_train_params_dict
+from NestedAE.dataset_utils import preprocess_datasets, TensorDataset
 
 # User input dictionaries
 from inputs.dataset_inputs import list_of_nn_datasets_dict
-from inputs.nn_inputs import list_of_nn_params_dict
 from inputs.train_inputs import list_of_nn_train_params_dict
 
 def set_global_random_seed(seed):
@@ -124,8 +124,9 @@ def run_preprocess(run_dir, ae_save_dir, ae_idx, dataset_type):
     numpy_dataset = hstack([processed_dataset[desc_name] for desc_name in desc_names])
     run_optimal_cluster_search = False
     num_cluster_range = range(2, 10) # Active if above set to True
-    num_clusters = 10
+    num_clusters = 3
     ##############################
+    print(f' --> Starting clustering then random splitting strategy.')
     if run_optimal_cluster_search:
         calinski_harabasz_scores = [] # (sum between cluster disperion)/(sum within cluster dispersion). Higher the score, better the model clustering 
         davies_bouldin_index = [] # Measures average "similarity" between clusters. 0 is lowest. Closer to 0, the better.
@@ -175,13 +176,14 @@ def run_preprocess(run_dir, ae_save_dir, ae_idx, dataset_type):
             delimiter=',', header=','.join(desc_names))
     savetxt(dataset_save_dir_path + '/val_samples_vstacked.csv', val_samples_vstacked,
             delimiter=',', header=','.join(desc_names))
-    print(f' --> Actual val split ratio : {int(len(val_samples_vstacked) / (len(train_samples_vstacked) + len(val_samples_vstacked)))}')
-    # Plot the feature histograms 
+    print(f' --> Actual val split ratio : {len(val_samples_vstacked) / (len(train_samples_vstacked) + len(val_samples_vstacked))}')
+    # Plot the descriptor distributions
     _, ax = plt.subplots(5, 5, figsize=(20, 20))
+    # Plot the feature histograms 
     for i in range(train_samples_vstacked.shape[1]):
-        ax[i//5, i%5].hist(train_samples_vstacked[:, i], bins=10, label='train')
+        ax[i//5, i%5].hist(train_samples_vstacked[:, i], bins=10, label='train', alpha=0.5)
         ax[i//5, i%5].hist(val_samples_vstacked[:, i], bins=10, label='val', alpha=1)
-        ax[i//5, i%5].set_title(f' ks test : {round(ks_2samp(train_samples_vstacked[:, i], val_samples_vstacked[:, i]).pvalue, 4)}')
+        ax[i//5, i%5].set_title(f' ks test : {np_round(ks_2samp(train_samples_vstacked[:, i], val_samples_vstacked[:, i]).pvalue, 4)}')
     plt.tight_layout()
     plt.savefig(dataset_save_dir_path + '/desc_dist.pdf')
     # Covert numpy_dataset to tensor_dictionary
@@ -194,7 +196,8 @@ def run_preprocess(run_dir, ae_save_dir, ae_idx, dataset_type):
         if i == 0:
             splitting_idxs[i] = desc_shapes[i]
         else:
-            splitting_idxs[i] = desc_shapes[i] + desc_shapes[i - 1]
+            splitting_idxs[i] = desc_shapes[i] + splitting_idxs[i - 1]
+    print(f' --> Splitting combined numpy dataset at indices : {splitting_idxs}')
     # Split the numpy dataset at the splitting idxs
     train_samples_col_split = split(train_samples_vstacked, splitting_idxs, axis=1)
     val_samples_col_split = split(val_samples_vstacked, splitting_idxs, axis=1)
@@ -205,11 +208,11 @@ def run_preprocess(run_dir, ae_save_dir, ae_idx, dataset_type):
     train_tensor_dataset = TensorDataset(name='train',
                                          tensor_dictionary=train_tensor_dictionary,
                                          desc_preprocessors=desc_preprocessors)
-    train_tensor_dataset.save_to_disk(dataset_save_dir_path + f'/train_dataset.pt')
+    save(train_tensor_dataset, dataset_save_dir_path + f'/train_dataset.pt')
     val_tensor_dataset = TensorDataset(name='val',
                                        tensor_dictionary=val_tensor_dictionary,
                                        desc_preprocessors=desc_preprocessors)
-    val_tensor_dataset.save_to_disk(dataset_save_dir_path + f'/val_dataset.pt')
+    save(val_tensor_dataset, dataset_save_dir_path + f'/val_dataset.pt')
     
 if __name__ == '__main__':
     run_preprocess()

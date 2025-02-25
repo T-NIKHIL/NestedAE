@@ -1,4 +1,5 @@
 .DS_Store
+jupyter_notebooks
 runs
 datasets
 inputs_old

@@ -23,21 +23,27 @@ list_of_nn_datasets_dict=[
                               'path':'https://raw.githubusercontent.com/mannodiarun/perovs_mfml_ga/refs/heads/run_ml/Expt_data.csv',
                                         # desc : Path to the dataset
                                         # dtype : str
-                              'descriptors':{'K':{'cols':[5], 'preprocess': None},
-                                             'Rb':{'cols':[6], 'preprocess': None},
-                                             'Cs':{'cols':[7], 'preprocess': None},
-                                             'MA':{'cols':[8], 'preprocess': None},
-                                             'FA':{'cols':[9], 'preprocess': None},
-                                             'Ca':{'cols':[10], 'preprocess': None},
-                                             'Sr':{'cols':[11], 'preprocess': None},
-                                             'Ba':{'cols':[12], 'preprocess': None},
-                                             'Ge':{'cols':[13], 'preprocess': None},
-                                             'Sb':{'cols':[14], 'preprocess': None},
-                                             'Pb':{'cols':[15], 'preprocess': None},
-                                             'Cl':{'cols':[16], 'preprocess': None},
-                                             'Br':{'cols':[17], 'preprocess': None},
-                                             'I':{'cols':[18], 'preprocess': None},
-                                             'bg':{'cols':[3], 'preprocess':None}},
+                        #       'descriptors':{'K':{'cols':[5], 'preprocess': None},
+                        #                      'Rb':{'cols':[6], 'preprocess': None},
+                        #                      'Cs':{'cols':[7], 'preprocess': None},
+                        #                      'MA':{'cols':[8], 'preprocess': None},
+                        #                      'FA':{'cols':[9], 'preprocess': None},
+                        #                      'Ca':{'cols':[10], 'preprocess': None},
+                        #                      'Sr':{'cols':[11], 'preprocess': None},
+                        #                      'Ba':{'cols':[12], 'preprocess': None},
+                        #                      'Ge':{'cols':[13], 'preprocess': None},
+                        #                      'Sb':{'cols':[14], 'preprocess': None},
+                        #                      'Pb':{'cols':[15], 'preprocess': None},
+                        #                      'Cl':{'cols':[16], 'preprocess': None},
+                        #                      'Br':{'cols':[17], 'preprocess': None},
+                        #                      'I':{'cols':[18], 'preprocess': None},
+                        #                      'bg':{'cols':[3], 'preprocess':None}},
+                        'descriptors':{
+                                'A_comp':{'cols':[5, 6, 7, 8, 9], 'preprocess': None},
+                                'B_comp':{'cols':[10, 11, 12, 13, 14, 15], 'preprocess': None},
+                                'X_comp':{'cols':[16, 17, 18], 'preprocess': None},
+                                'bg':{'cols':[3], 'preprocess':None}
+                        },
                               'load_preprocessor':False
                               }
                     }

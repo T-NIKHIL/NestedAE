@@ -11,12 +11,13 @@ from pytorch_lightning import LightningModule # type: ignore
 
 # User defined libraries
 from NestedAE import nn_utils
+from NestedAE.nn_utils import check_dict_key_exists
 
 class AE(LightningModule):
     """Class for building autoencoders using linear layers."""
 
     def __init__(self,
-                 ae_save_dir,
+                 ae_save_dir_path,
                  nn_params_dict,
                  nn_train_params_dict,
                  dataset_path):
@@ -27,7 +28,7 @@ class AE(LightningModule):
         self.save_hyperparameters()
         self.automatic_optimization = True
         self.name = nn_params_dict['name']
-        self.ae_save_dir = ae_save_dir
+        self.ae_save_dir_path = ae_save_dir_path
         self.nn_params_dict = nn_params_dict
         self.nn_train_params_dict = nn_train_params_dict
         self.datasets = load(dataset_path, weights_only=False)
@@ -49,46 +50,82 @@ class AE(LightningModule):
         ae_modules = {}
         # Outer loop iterates over the ae_modules
         for ae_module_name, ae_module_dict in self.ae_module_dicts.items():
-            ae_module_keys = list(ae_module_dict.keys())
             layer_list = nn.ModuleList()
-            num_layers = ae_module_dict['hidden_layers'] + 1
+            # Check for existence of keys or take defualts if not present
+            if check_dict_key_exists('hidden_layers', ae_module_dict):
+                hidden_layers = ae_module_dict['hidden_layers']
+            else:
+                hidden_layers = 0
+            if check_dict_key_exists('hidden_dim', ae_module_dict):
+                hidden_dim = ae_module_dict['hidden_dim']
+            else:
+                hidden_dim = None
+            if check_dict_key_exists('hidden_activation', ae_module_dict):
+                hidden_activation = ae_module_dict['hidden_activation']
+            else:
+                hidden_activation = None
+            if check_dict_key_exists('output_activation', ae_module_dict):
+                output_activation = ae_module_dict['output_activation']
+            else:
+                output_activation = None
+            if check_dict_key_exists('layer_dropout', ae_module_dict):
+                layer_dropout = ae_module_dict['layer_dropout']
+            else:
+                layer_dropout = None
+            if check_dict_key_exists('layer_kernel_init', ae_module_dict):
+                layer_kernel_init = ae_module_dict['layer_kernel_init']
+            else:
+                layer_kernel_init = None
+            if check_dict_key_exists('layer_bias_init', ae_module_dict):
+                layer_bias_init = ae_module_dict['layer_bias_init']
+            else:
+                layer_bias_init = None
+            if check_dict_key_exists('load_params', ae_module_dict):
+                load_params = ae_module_dict['load_params']
+            else:
+                load_params = False
+
+            num_layers = hidden_layers + 1
             for layer_num in range(num_layers):
                 if layer_num == 0:
                     # Calculate the input dimensions to first layer
                     input_dim = nn_utils.get_module_input_dim(ae_module_dict['connect_to'],
                                                                 self.nn_params_dict,
                                                                 self.datasets.desc_shapes)
-                    layer_list.append(nn.Linear(in_features=input_dim,
+                    if hidden_dim is not None:
+                        layer_list.append(nn.Linear(in_features=input_dim,
                                                 out_features=ae_module_dict['hidden_dim'],
                                                 bias=True))
+                    else:
+                        layer_list.append(nn.Linear(in_features=input_dim,
+                                                out_features=ae_module_dict['output_dim'],
+                                                bias=True))
+                        break # Only output layer
                 elif layer_num == num_layers - 1:
                     layer_list.append(nn.Linear(in_features=ae_module_dict['hidden_dim'],
                                                 out_features=ae_module_dict['output_dim'],
                                                 bias=True))
-                    if 'output_activation' in ae_module_keys:
-                        output_activation = ae_module_dict['output_activation']
-                        layer_list.append(nn_utils.set_layer_activation(output_activation))
-                    break
+                    if output_activation:
+                        layer_list.append(output_activation)
+                    break # Dont add hidden activations
                 else:
                     layer_list.append(nn.Linear(in_features=ae_module_dict['hidden_dim'],
                                                 out_features=ae_module_dict['hidden_dim'],
                                                 bias=True))
                 # Add hidden activations if specified
-                if 'hidden_activation' in ae_module_keys:
-                    hidden_activation = ae_module_dict['hidden_activation']
-                    layer_list.append(nn_utils.set_layer_activation(hidden_activation))
-                if 'layer_dropout' in ae_module_keys:
-                    dropout_type = ae_module_dict['layer_dropout']['type']
-                    p = ae_module_dict['layer_dropout']['p']
-                    layer_list.append(nn_utils.set_layer_dropout(dropout_type, p))
+                if hidden_activation:
+                    layer_list.append(hidden_activation)
+                if layer_dropout:
+                    layer_list.append(layer_dropout)
             # Initialize weights for all layers
-            if 'layer_kernel_init' in ae_module_keys or 'layer_bias_init' in ae_module_keys:
-                layer_list = nn_utils.set_layer_init(layer_list, ae_module_dict)
+            if layer_kernel_init:
+                layer_list = nn_utils.set_layer_init(layer_list, ae_module_dict, init='kernel')
+            if layer_bias_init:
+                layer_list = nn_utils.set_layer_init(layer_list, ae_module_dict, init='bias')
             # Check to see if a ae_module has to be loaded
-            if 'load_params' in ae_module_keys:
-                path = ae_module_dict['load_params']
+            if load_params:
                 try:
-                    ae_module_params = load(path, weights_only=False)
+                    ae_module_params = load(load_params, weights_only=False)
                     layer_list.load_state_dict(ae_module_params['state_dict'])
                     print(f' --> Loaded ae_module {ae_module_name}.')
                 except OSError as err:
@@ -150,7 +187,7 @@ class AE(LightningModule):
         losses = {}
         for ae_module_name, ae_module_dict in self.ae_module_dicts.items():
             if 'loss' in list(ae_module_dict.keys()):
-                losses[ae_module_name] = nn_utils.create_loss_object(ae_module_dict['loss']['type'])
+                losses[ae_module_name] = ae_module_dict['loss']['type']
         self.ae_module_losses = losses
 
     def configure_optimizers(self):
@@ -175,7 +212,7 @@ class AE(LightningModule):
             target_name = self.ae_module_dicts[ae_module_name]['loss']['target']
             target = batch[target_name]
 
-            loss_type = self.ae_module_dicts[ae_module_name]['loss']['type']
+            loss_name = self.ae_module_dicts[ae_module_name]['loss']['type'].__class__.__name__
             loss_wt = self.ae_module_dicts[ae_module_name]['loss']['wt']
             loss_wt = tensor(loss_wt, device=self.device, dtype=torch_float32, requires_grad=False)
             if 'sample_wts' in list(batch.keys()):
@@ -185,15 +222,12 @@ class AE(LightningModule):
 
             pred_loss = ae_module_loss(output, target).multiply(loss_wt).multiply(sample_wt)
             total_train_loss = total_train_loss.add(pred_loss)
-            train_loss_values['train_' + target_name + '_' + loss_type] = pred_loss.item()
+            train_loss_values['train_' + target_name + '_' + loss_name] = pred_loss.item()
 
             if 'metric' in list(self.ae_module_dicts[ae_module_name].keys()):
-                for metric_name in self.ae_module_dicts[ae_module_name]['metric']:
-                    if metric_name == 'ce':
-                        metric = nn_utils.create_metric_object(metric_name, num_classes=target.size(1))
-                    else:
-                        metric = nn_utils.create_metric_object(metric_name)
+                for metric in self.ae_module_dicts[ae_module_name]['metric']:
                     metric_train = metric(output, target)
+                    metric_name = metric.__class__.__name__
                     train_loss_values['train_' + target_name + '_' + metric_name] = metric_train.item()
 
         # Init Regularization losses
@@ -202,15 +236,25 @@ class AE(LightningModule):
 
         # Regularization losses
         for ae_module_name, ae_module_dict in self.ae_module_dicts.items():
-            if 'layer_weight_reg_l1' in list(ae_module_dict.keys()):
+
+            if check_dict_key_exists('layer_weight_reg_l1', ae_module_dict):
                 lambda_l1 = ae_module_dict['layer_weight_reg_l1']
+            else:
+                lambda_l1 = 0
+
+            if check_dict_key_exists('layer_weight_reg_l2', ae_module_dict):
+                lambda_l2 = ae_module_dict['layer_weight_reg_l2']
+            else:
+                lambda_l2 = 0
+
+            if lambda_l1 > 0:
                 lambda_l1 = tensor(lambda_l1, device=self.device, dtype=torch_float32, requires_grad=False)
                 for name, params in self.ae_modules[ae_module_name].named_parameters():
                     if name.endswith('.weight') or name.endswith('.bias'):
                         p = params.view(-1)
-                        l1_param_loss = l1_param_loss.add(
-                            p.abs().sum().multiply(lambda_l1))
-                lambda_l2 = ae_module_dict['layer_weight_reg_l2']
+                        l1_param_loss = l1_param_loss.add(p.abs().sum().multiply(lambda_l1))
+
+            if lambda_l2 > 0:
                 lambda_l2 = tensor(lambda_l2, device=self.device, dtype=torch_float32, requires_grad=False)
                 for name, params in self.ae_modules[ae_module_name].named_parameters():
                     if name.endswith('.weight') or name.endswith('.bias'):
@@ -218,8 +262,7 @@ class AE(LightningModule):
                         # params.data :- returns the weight data. No reshape
                         # params.view :- returns the weight data. With reshape
                         p = params.view(-1)
-                        l2_param_loss = l2_param_loss.add(
-                            p.pow(2).sum().multiply(lambda_l2))
+                        l2_param_loss = l2_param_loss.add(p.pow(2).sum().multiply(lambda_l2))
 
         # Add in regularization losses
         total_train_loss += l1_param_loss + l2_param_loss
@@ -247,7 +290,7 @@ class AE(LightningModule):
             target_name = self.ae_module_dicts[ae_module_name]['loss']['target']
             target = batch[target_name]
             
-            loss_type = self.ae_module_dicts[ae_module_name]['loss']['type']
+            loss_name = self.ae_module_dicts[ae_module_name]['loss']['type'].__class__.__name__
             loss_wt = self.ae_module_dicts[ae_module_name]['loss']['wt']
             loss_wt = tensor(loss_wt, device=self.device, dtype=torch_float32, requires_grad=False)
             if 'sample_wts' in list(batch.keys()):
@@ -258,15 +301,12 @@ class AE(LightningModule):
             
             pred_loss = ae_module_loss(output, target)*loss_wt*sample_wt
             total_val_loss += pred_loss
-            val_loss_values['val_' + target_name + '_' + loss_type] = pred_loss.item()
+            val_loss_values['val_' + target_name + '_' + loss_name] = pred_loss.item()
 
             if 'metric' in list(self.ae_module_dicts[ae_module_name].keys()):
-                for metric_name in self.ae_module_dicts[ae_module_name]['metric']:
-                    if metric_name == 'ce':
-                        metric = nn_utils.create_metric_object(metric_name, num_classes=target.size(1))
-                    else:
-                        metric = nn_utils.create_metric_object(metric_name)
+                for metric in self.ae_module_dicts[ae_module_name]['metric']:
                     metric_val = metric(output, target)
+                    metric_name = metric.__class__.__name__
                     val_loss_values['val_' + target_name + '_' + metric_name] = metric_val.item()
 
         val_loss_values['total_val_loss'] = total_val_loss.item()
@@ -322,7 +362,7 @@ class AE(LightningModule):
             if 'save_output_on_fit_end' in list(ae_module_dict.keys()):
                 if ae_module_dict['save_output_on_fit_end']:
                     # Create a module outputs dir if it does not exist
-                    ae_module_outputs_dir = f'runs/{self.run_dir}/{self.ae_save_dir}/ae_param_search/{self.run_id}/ae_module_outputs'
+                    ae_module_outputs_dir = f'{self.ae_save_dir_path}/ae_module_outputs'
                     if not os.path.exists(ae_module_outputs_dir):
                         os.mkdir(ae_module_outputs_dir)
                     if not os.path.exists(ae_module_outputs_dir + '/train'):
@@ -337,7 +377,7 @@ class AE(LightningModule):
             if 'save_output_on_epoch_end' in list(ae_module_dict.keys()):
                 if ae_module_dict['save_output_on_epoch_end']:
                     # Create a module outputs dir if it does not exist
-                    ae_module_outputs_dir = f'runs/{self.run_dir}/{self.ae_save_dir}/ae_param_search/{self.run_id}/ae_module_outputs'
+                    ae_module_outputs_dir = f'{self.ae_save_dir_path}/ae_module_outputs'
                     if not os.path.exists(ae_module_outputs_dir):
                         os.mkdir(ae_module_outputs_dir)
                     if not os.path.exists(ae_module_outputs_dir + '/train'):
@@ -350,7 +390,7 @@ class AE(LightningModule):
             if 'save_params' in list(ae_module_dict.keys()):
                 if ae_module_dict['save_params']:
                     # Make a directory to store the modules
-                    ae_modules_dir = f'runs/{self.run_dir}/{self.ae_save_dir}/ae_param_search/{self.run_id}/ae_module_params'
+                    ae_modules_dir = f'{self.ae_save_dir_path}/ae_module_params'
                     if not os.path.exists(ae_modules_dir):
                         os.mkdir(ae_modules_dir)
                     ae_module_path = f'{ae_modules_dir}/{ae_module_name}_params.pt'
