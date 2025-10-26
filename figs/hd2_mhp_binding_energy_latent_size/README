@@ -1,0 +1,31 @@
+In this experiment I use the binding energy dataset 'datasets/MHP_bandgaps_AND_perov_solvent_BE/nestedae_dataset/perov_solv_BE_train_fold0.csv'.
+
+Training params: 
+epochs = 1000,
+lr = 0.01
+L1 = 0.001
+lam_pred = lam_design = 1 ; lam_latent = 10 
+Adam optimizer
+
+Encoder arch.
+1 hidden layer with 25 hidden nodes
+First layer activation : None
+Second layer activation : Tanh
+
+Prop Predictor arch.
+1 hidden layer with 25 hidden nodes
+First layer activation : ReLU
+Second layer activation : ReLU
+
+Design predictor arch.
+1 hidden layer with 25 hidden nodes
+First layer activation : ReLU
+Second layer activation : None
+
+Latent predictor arch.
+1 hidden layer with 25 hidden nodes
+First layer activation : Inv. Hyperbolic Tanh
+Second layer activation : None
+
+Selecting latent dim 6 as the minimum number of latent dimensions required.
+

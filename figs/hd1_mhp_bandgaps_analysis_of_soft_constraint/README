@@ -1,0 +1,16 @@
+In this experiment I use the bandgap dataset 'datasets/MHP_bandgaps_AND_perov_solvent_BE/nestedae_dataset/perov_bandgaps_PBE_arun_reduced_train_fold1.csv' to compare the effect of the modified objective function on the latent size, structure and correlation between latents. I compare the losses of the hetero encoder trained with and without the modified objective function.
+
+Training params: 
+epochs = 3000,
+lr = 0.01
+L1 = 0.001
+lam_pred = lam_design = 1
+Adam optimizer
+Encoder arch. = Predictor arch. = Design predictor arch.
+1 hidden layer with 25 hidden nodes for encoder (no act.), 
+1 hidden layer with 25 hidden nodes for design predictor (no act.) and 
+I hidden layer with 25 hidden nodes for predictor (ReLU act.)
+Using fold 1 for training the models since it shows good train-val feature distribution.
+
+Selecting latent dim 9 for with soft constraint and latent dim 10 for without soft constraint for hetero decoder.
+

@@ -1,4 +1,4 @@
-Metadata-Version: 2.2
+Metadata-Version: 2.4
 Name: NestedAE
 Version: 0.0.1
 Summary: NestedAE is a neural network model based on supervised autoencoders for multi-scale modelling. Each supervised autoencoder learns to find the relationship between descriptors and properties at a required length scale while building an invaraiant latent structure. These learned latent variables are passed as features along with decriptors at a larger length scale to find their relationship with the property at a larger length scale.
@@ -23,6 +23,7 @@ Requires-Dist: lightning<3,>=2.0.8
 Requires-Dist: pandas<3,>=2.1.0
 Requires-Dist: scikit-learn<2,>=1.2.1
 Requires-Dist: pytest<9,>=8.0
+Dynamic: license-file
 
 Nested Autotoencoders (NestedAEs)
 ----------------

@@ -1,0 +1,6 @@
+- The shapley values are calculated using the Treeexplainer.
+- For each observation in the dataset a SHAP value is computed.
+- For each feature in the dataset, the mean of the absolute SHAP values is caculated.
+- The SHAP values file stored contain SHAP values from the last trial.
+- To plot the normalized Z score plot, we take the mean of the mean(abs(SHAP))) for all the observed and shadow feature and subtract and divide by standard deviation.
+- We then plot box plots for all previous trials.

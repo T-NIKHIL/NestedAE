@@ -1,0 +1,5 @@
+bo_results_no_feat_sel_max.csv : Contains the candidate with best observed property among selected candidates from the test set at each bactch for all the trials
+percent_space_explored.
+
+batches_to_reach_optimal_no_feat_sel_max.csv : Number of batches each trial takes to reach max value.
+

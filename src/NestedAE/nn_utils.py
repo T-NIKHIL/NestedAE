@@ -132,9 +132,9 @@ def set_layer_init(layer_list, module_dict, init='kernel'):
                     nn.init.xavier_normal_(layer_params, gain=hidden_gain)
                     print(f' --> Setting out layer {init} init with {scheme} {distribution} distribution with gain {out_gain}')
         elif init_type == 'normal':
-            nn.init.normal_(layer_params, mean=0, std=1)
+            nn.init.normal_(layer_params, mean=0, std=10)
         elif init_type == 'uniform':
-            nn.init.uniform_(layer_params, a=0, b=1)
+            nn.init.uniform_(layer_params, a=-10, b=10)
         elif init_type == 'zeros':
             nn.init.zeros_(layer_params)
         else:

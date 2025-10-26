@@ -1,0 +1,10 @@
+The question whether feature importance should be calculated based on training or test data is addressed here : https://slds-lmu.github.io/iml_methods_limitations/pfi-data.html
+
+It all boils down to the question we would like to answer.
+
+Q) What descriptors did the model use to construct the latent space ?
+- To answer this question we need to use the training data.
+
+Q) What descriptors does the model attribute as important for unseen data ?
+- To answer this question we need to run compute shapely values for features on the val/test set. 
+- We are more interested to know feature attribution on unseen data so that are results are not biased due to model overfitting.

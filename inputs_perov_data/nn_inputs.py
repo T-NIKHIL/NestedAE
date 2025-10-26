@@ -1,7 +1,6 @@
 """Neural network inputs dictionary"""
 
-from torch import nn 
-from torchmetrics import Accuracy, MeanAbsoluteError
+from torch import nn
 
 # Can define custom losses and metrics and pass them as arguments to the loss and metric keys in the dictionary
 #### Custom Losses and Metrics ####
@@ -22,15 +21,15 @@ list_of_nn_params_dict=[
                      'encoder':{
                             # 'connect_to':['K', 'Rb', 'Cs', 'MA', 'FA', 'Ca', 'Sr', 'Ba', 'Ge', 'Sb', 'Pb', 'Cl', 'Br', 'I'], # List of features to connect to in database go here
                             'connect_to':['A_comp', 'B_comp', 'X_comp'],
+                            'hidden_dim':50,
+                            'hidden_layers':1,
+                            'hidden_activation':nn.ReLU(),
                             'output_dim':10,
                             # 'output_dim':{'values':[8, 10, 12, 14]},
                             # 'hidden_dim':{'values':[25, 50, 100, 200]}, # Use the 'values' key for hyperparam tuning
-                            'hidden_dim':None,
                             # 'hidden_layers':{'values':[1, 2, 3]},
-                            'hidden_layers':0,
                             # 'hidden_activation':{'values':['tanh', 'relu']},
-                            'hidden_activation':None,
-                            'output_activation':nn.ReLU(),
+                            # 'output_activation':nn.ReLU(),
                             'layer_type':'linear', 
                             'layer_kernel_init':'xavier_normal',
                             'layer_weight_reg_l2':0.001,
@@ -40,11 +39,10 @@ list_of_nn_params_dict=[
 
                      'predictor':{
                             'connect_to':['encoder'],
+                            'hidden_dim':50,
+                            'hidden_layers':1,
+                            'hidden_activation':nn.ReLU(),
                             'output_dim':1,
-                            'hidden_dim':None,
-                            'hidden_layers':0, 
-                            'hidden_activation':None,
-                            'output_activation':nn.ReLU(),
                             'layer_type':'linear',
                             'layer_kernel_init':'xavier_normal',
                             'layer_weight_reg_l2':0.001,
@@ -57,55 +55,64 @@ list_of_nn_params_dict=[
 
                      'A_comp_decoder':{
                             'connect_to':['encoder'],
+                            'hidden_dim':50,
+                            'hidden_layers':1,
+                            'hidden_activation':nn.ReLU(),
                             'output_dim':5,
-                            'hidden_dim':None,
-                            'hidden_layers':0, 
-                            'hidden_activation':None,
-                            'output_activation':None,
+                            # 'output_activation':nn.Softmax(),
                             'layer_type':'linear',
                             'layer_kernel_init':'xavier_normal',
                             'layer_weight_reg_l2':0.001,
-                            'loss':{'type':nn.CrossEntropyLoss(),
+                            # 'loss':{'type':nn.KLDivLoss(reduction='batchmean'),
+                            #        'wt':1,
+                            #        'target':'A_comp'},
+                            'loss':{'type':nn.L1Loss(),
                                    'wt':1,
                                    'target':'A_comp'},
-                            'metric':[MeanAbsoluteError()],
+                            # 'metric':[nn.L1Loss()],
                             'param_optimization':False,
                             'save_output_on_fit_end':True
                      },
 
                      'B_comp_decoder':{
                             'connect_to':['encoder'],
+                            'hidden_dim':50,
+                            'hidden_layers':1,
+                            'hidden_activation':nn.ReLU(),
                             'output_dim':6,
-                            'hidden_dim':None,
-                            'hidden_layers':0, 
-                            'hidden_activation':None,
-                            'output_activation':None,
+                            # 'output_activation':nn.Softmax(),
                             'layer_type':'linear',
                             'layer_kernel_init':'xavier_normal',
                             'layer_weight_reg_l2':0.001,
-                            'loss':{'type':nn.CrossEntropyLoss(),
+                            # 'loss':{'type':nn.KLDivLoss(reduction='batchmean'),
+                            #        'wt':1,
+                            #        'target':'B_comp'},
+                            'loss':{'type':nn.L1Loss(),
                                    'wt':1,
                                    'target':'B_comp'},
-                            'metric':[MeanAbsoluteError()],
+                            # 'metric':[nn.L1Loss()],
                             'param_optimization':False,
                             'save_output_on_fit_end':True
                      },
 
                      'X_comp_decoder':{
                             'connect_to':['encoder'],
+                            'hidden_dim':50,
+                            'hidden_layers':1,
+                            'hidden_activation':nn.ReLU(),
                             'output_dim':3,
-                            'hidden_dim':None,
-                            'hidden_layers':0, 
-                            'hidden_activation':None,
-                            'output_activation':None,
+                            # 'output_activation':nn.Softmax(),
                             'layer_type':'linear',
                             'layer_kernel_init':'xavier_normal',
                             'layer_weight_reg_l2':0.001,
-                            'loss':{'type':nn.CrossEntropyLoss(),
+                            # 'loss':{'type':nn.KLDivLoss(reduction='batchmean'),
+                            #        'wt':1,
+                            #        'target':'X_comp'},
+                            'loss':{'type':nn.L1Loss(),
                                    'wt':1,
                                    'target':'X_comp'},
                             # 'metric':[Accuracy(task='MULTILABEL', num_labels=3)],
-                            'metric':[MeanAbsoluteError()],
+                            # 'metric':[nn.L1Loss()],
                             'param_optimization':False,
                             'save_output_on_fit_end':True
                      }

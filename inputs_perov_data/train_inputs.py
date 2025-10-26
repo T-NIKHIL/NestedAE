@@ -3,7 +3,7 @@
 list_of_nn_train_params_dict=[
         
         {'global_seed':100, 
-         'epochs':10,  
+         'epochs':500,  
          'batch_size':1, 
          'shuffle_data_between_epochs':True, 
          'val_split':0.1, 

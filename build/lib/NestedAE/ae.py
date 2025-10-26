@@ -100,6 +100,8 @@ class AE(LightningModule):
                         layer_list.append(nn.Linear(in_features=input_dim,
                                                 out_features=ae_module_dict['output_dim'],
                                                 bias=True))
+                        if output_activation:
+                            layer_list.append(output_activation)
                         break # Only output layer
                 elif layer_num == num_layers - 1:
                     layer_list.append(nn.Linear(in_features=ae_module_dict['hidden_dim'],
