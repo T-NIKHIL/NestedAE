@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # Dataset Parameters
     #################################################################
 
-    dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/nestedae_dataset/perov_bandgaps_PBE_arun_reduced.csv'
+    dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/perov_bandgaps_PBE.csv'
     descriptors = ['A_IONRAD',
                     'A_MASS',
                     'A_DPM',
@@ -62,10 +62,10 @@ if __name__ == "__main__":
     param_grid_xgb = {
         'n_estimators': [250, 500, 1000, 2000],
         'learning_rate': [0.01, 0.05, 0.1],
-        'max_depth': [2, 3, 4, 5],
-        'subsample': [0.4, 0.6, 0.8, 1.0],
+        'max_depth': [3, 4, 5],
+        'subsample': [0.6, 0.8, 1.0],
         # 'colsample_bytree': [0.6, 0.8, 1.0],
-        # 'alpha': [0, 0.01, 0.1],
+        'alpha': [1.0],
         # 'lambda':[0, 0.01, 0.1]
     }
     param_grid_RF = {
@@ -150,13 +150,13 @@ if __name__ == "__main__":
     # std_mae_train =  [ 0.001, 0.001, 0.004, 0.003, 0.003, 0.000, 0.010]
 
     # # Scatter plot true and predicted bandgaps
-    # fig, ax = plt.subplots(figsize=(4.0, 3.0))
+    # fig, ax = plt.subplots(figsize=(3.5, 3.0))
     # # Create plots to show mean and standard deviation of MAE for test and train datasets
     # ax.errorbar(model_name, y=mean_mae_train, yerr=std_mae_train, label='Train', fmt='o', color='blue', capsize=5)
     # ax.errorbar(model_name, y=mean_mae_test, yerr=std_mae_test, label='Val', fmt='o', color='orange', capsize=5)
     # ax.set_xticks(np.arange(len(model_name)))
     # ax.set_xticklabels(model_name, rotation=45, ha='right')
-    # ax.set_ylabel('Mean Absolute Error (eV)')
+    # ax.set_ylabel('Bandgap MAE (eV)')
     # plt.tight_layout()
     # plt.legend(frameon=False, fontsize=8)
     # plt.savefig('NAE_v_NHD_v_other_ML_mhp_bandgaps.pdf', bbox_inches='tight', dpi=300)

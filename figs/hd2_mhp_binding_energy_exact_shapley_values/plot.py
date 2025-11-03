@@ -101,7 +101,7 @@ if __name__ == "__main__":
     # Dataset Parameters
     #################################################################
 
-    dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/nestedae_dataset/perov_solv_BE_for_nestedhd.csv'
+    dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/perov_solv_BE_for_nestedhd.csv'
     descriptors = ['SOLV_DENSITY',
                     'SOLV_DIELECTRIC',
                     'SOLV_GDN',
@@ -122,11 +122,11 @@ if __name__ == "__main__":
 
     features_for_SHAP_calc = 'descriptors' # 'descriptors' or 'latents'
     target_for_SHAP_calc = 'be' # 'be' or 'latent'
-    which_latent_dim = 0  # Only used if target_for_SHAP_calc is 'latent'
+    which_latent_dim = 5  # Only used if target_for_SHAP_calc is 'latent'
     which_dataset_to_use = 'val'  # 'train' or 'val'
     rename_columns = ['SOLV_DENS', 'SOLV_DIEL', 'SOLV_GDN', 'SOLV_DPM', 'SOLV_MV', 'SOLV_UMBO', 'l0', 'l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9']
     load_data = False
-    data_filename = 'shapley_vals_for_y_pred_using_fold7_val.csv'
+    data_filename = 'shapley_vals_for_l5_pred_using_fold7_train.csv'
 
     # #################################################################
     # --------------------- END OF USER INPUT ---------------------
@@ -288,17 +288,17 @@ if __name__ == "__main__":
 
     mean_abs_shapley_values, feats_for_plot = zip(*sorted(zip(mean_abs_shapley_values, shapley_values_df.columns), reverse=False))
 
-    fig, ax = plt.subplots(figsize=(4, 3))
+    fig, ax = plt.subplots(figsize=(4.3, 3))
     ax.barh(feats_for_plot, mean_abs_shapley_values, color='skyblue')
     ax.set_xlabel(r'$ \textrm{Mean} ( | \textrm{SHAP value} | )$')
     ax.set_ylabel(r'Feature')
     ax.set_xticks(np.arange(min(mean_abs_shapley_values), max(mean_abs_shapley_values), 1.0))
     # Label the horizontal bars with their values
-    for i, v in enumerate(mean_abs_shapley_values):
-        ax.text(v + 0.001, i, f"{v:.4f}", color='blue', va='center', fontsize=8)
+    # for i, v in enumerate(mean_abs_shapley_values):
+    #     ax.text(v + 0.001, i, f"{v:.4f}", color='blue', va='center', fontsize=8)
     # Remove the top and left frame lines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['right'].set_visible(False)
     plt.tight_layout()
     if target_for_SHAP_calc == 'latent':
         plt.savefig(f'shapley_vals_for_l{which_latent_dim}_pred_using_fold{fold_num}_{which_dataset_to_use}.pdf', bbox_inches='tight', dpi=300)

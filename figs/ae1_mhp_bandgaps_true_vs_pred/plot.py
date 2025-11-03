@@ -117,7 +117,7 @@ if __name__ == "__main__":
   # Dataset Parameters
   #################################################################
 
-  dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/nestedae_dataset/perov_bandgaps_PBE_arun_reduced.csv'
+  dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/perov_bandgaps_PBE.csv'
   descriptors = ['A_IONRAD',
                   'A_MASS',
                   'A_DPM',
@@ -216,8 +216,8 @@ if __name__ == "__main__":
 
   # Scatter plot true and predicted bandgaps
   fig, ax = plt.subplots(figsize=(3.0, 3.0))
-  ax.scatter(bandgaps_true_train, bandgaps_pred_train.detach().cpu().numpy(), alpha=1.0, s=5, c='blue', label='Train')
-  ax.scatter(bandgaps_true_val, bandgaps_pred_val.detach().cpu().numpy(), alpha=1.0, s=5, c='orange', label='Validation')
+  # ax.scatter(bandgaps_true_train, bandgaps_pred_train.detach().cpu().numpy(), alpha=1.0, s=5, c='blue', label='Train')
+  ax.scatter(bandgaps_true_val, bandgaps_pred_val.detach().cpu().numpy(), alpha=1.0, s=10, c='orange', label='Validation')
   ax.set_xlabel(r'True Bandgap (eV)')
   ax.set_ylabel(r'Predicted Bandgap (eV)')
   ax.plot([bandgaps_true.min(), bandgaps_true.max()], [bandgaps_true.min(), bandgaps_true.max()], 'r--', lw=1)
@@ -226,13 +226,14 @@ if __name__ == "__main__":
   # ax.grid()
   # Insert text box to the lower right hand corner
   ax.text(0.52, 0.12,
-            f'Train MAE: {np.mean(np.abs(bandgaps_pred_train.detach().cpu().numpy().squeeze() - bandgaps_true_train)):.2f} eV \n \
-              Val. MAE: {np.mean(np.abs(bandgaps_pred_val.detach().cpu().numpy().squeeze() - bandgaps_true_val)):.2f} eV',
+            # f'Train MAE: {np.mean(np.abs(bandgaps_pred_train.detach().cpu().numpy().squeeze() - bandgaps_true_train)):.2f} eV \n \
+              f'Test MAE: {np.mean(np.abs(bandgaps_pred_val.detach().cpu().numpy().squeeze() - bandgaps_true_val)):.2f} eV \n \
+                Test RMSE: {np.sqrt(np.mean((bandgaps_pred_val.detach().cpu().numpy().squeeze() - bandgaps_true_val)**2)):.2f} eV',
             transform=ax.transAxes,
             fontsize=8,
             verticalalignment='top',
             bbox=dict(boxstyle='round', facecolor='white', alpha=0.5, edgecolor='none'))
-  ax.legend(frameon=False, fontsize=8)
+  # ax.legend(frameon=False, fontsize=8)
   ax.set_aspect('equal', 'box')
   ax.set_xticks(np.arange(1, 6, 1))
   ax.set_yticks(np.arange(1, 6, 1))

@@ -28,13 +28,13 @@ mean_mae_train = [0.796,      0.761,          0.833,   1.137,   1.135,   0.660, 
 std_mae_train =  [0.027,      0.021,          0.017,   0.023,   0.023,   0.040,      0.030]
 
 # Scatter plot true and predicted bandgaps
-fig, ax = plt.subplots(figsize=(4.0, 3.0))
+fig, ax = plt.subplots(figsize=(3.5, 3.0))
 # Create plots to show mean and standard deviation of MAE for test and train datasets
 ax.errorbar(model_name, y=mean_mae_train, yerr=std_mae_train, label='Train', fmt='o', color='blue', capsize=5)
 ax.errorbar(model_name, y=mean_mae_test, yerr=std_mae_test, label='Val', fmt='o', color='orange', capsize=5)
 ax.set_xticks(np.arange(len(model_name)))
 ax.set_xticklabels(model_name, rotation=45, ha='right')
-ax.set_ylabel('Mean Absolute Error (eV)')
+ax.set_ylabel('MHP-Solvent \n Binding Energy MAE (kJ/mol)')
 plt.tight_layout()
 plt.legend(frameon=False, fontsize=8)
 plt.savefig('NAE_v_NHD_v_other_ML_mhp_solv_BE.pdf', bbox_inches='tight', dpi=300)

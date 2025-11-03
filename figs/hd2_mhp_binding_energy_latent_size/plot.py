@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
 
 # Plotting parameters
 plt.rcParams.update({
@@ -45,13 +43,13 @@ val_latent_pred_mean =   [0.03, 0.07, 0.05, 0.04, 0.07, 0.05, 0.04, 0.04, 0.04, 
 val_latent_pred_std =    [0.01, 0.05, 0.02, 0.01, 0.04, 0.03, 0.04, 0.02, 0.01, 0.10, 0.00, 0.08, 0.13,  0.07, 0.14]
 
 # Scatter plot true and predicted bandgaps
-fig, axs = plt.subplots(1, 3, figsize=(10.0, 3.0))
+fig, axs = plt.subplots(1, 3, figsize=(11.0, 3.0))
 axs[0].errorbar(latent_dims, train_be_pred_mean, yerr=train_be_pred_std, marker='o', c='blue', label='Train binding energy', markersize=4, capsize=3)
 axs[0].errorbar(latent_dims, val_be_pred_mean, yerr=val_be_pred_std, marker='o', c='orange', label='Val. binding energy', markersize=4, capsize=3)
 axs[0].set_xlabel(r'Latent Dimension')
 axs[0].set_xticks(latent_dims)
 axs[0].set_xticklabels(latent_dims)
-axs[0].set_ylabel(r'MAE Binding Energy (kJ/mol)')
+axs[0].set_ylabel('MHP-Solvent \n Binding Energy MAE (kJ/mol)')
 axs[0].legend(frameon=False, fontsize=8)
 
 axs[1].errorbar(latent_dims, train_design_pred_mean, yerr=train_design_pred_std, marker='o', c='blue', label='Train design', markersize=4, capsize=3)
@@ -59,7 +57,7 @@ axs[1].errorbar(latent_dims, val_design_pred_mean, yerr=val_design_pred_std, mar
 axs[1].set_xlabel(r'Latent Dimension')
 axs[1].set_xticks(latent_dims)
 axs[1].set_xticklabels(latent_dims)
-axs[1].set_ylabel(r'Cross Entropy Loss')
+axs[1].set_ylabel('Design Cross Entropy Loss')
 # axs[1].set_ylim(0.55, 1.0)
 axs[1].legend(frameon=False, fontsize=8)
 
@@ -68,7 +66,7 @@ axs[2].errorbar(latent_dims, val_latent_pred_mean, yerr=val_latent_pred_std, mar
 axs[2].set_xlabel(r'Latent Dimension')
 axs[2].set_xticks(latent_dims)
 axs[2].set_xticklabels(latent_dims)
-axs[2].set_ylabel(r'MAE Latent Reconstruction')
+axs[2].set_ylabel('Latent Recon. MAE')
 # axs[2].set_ylim(0.55, 1.0)
 axs[2].legend(frameon=False, fontsize=8)
 

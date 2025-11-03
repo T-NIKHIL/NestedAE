@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # Dataset Parameters
     #################################################################
 
-    dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/nestedae_dataset/perov_bandgaps_PBE_arun_reduced.csv'
+    dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/perov_bandgaps_PBE.csv'
     descriptors = ['A_IONRAD',
                    'A_MASS',
                    'A_DPM',
@@ -140,9 +140,9 @@ if __name__ == "__main__":
     #################################################################
 
     features_for_SHAP_calc = 'descriptors' # 'descriptors' or 'latents'
-    target_for_SHAP_calc = 'latent' # 'bg' or 'latent'
-    which_latent_dim = 9  # Only used if target_for_SHAP_calc is 'latent'
-    which_dataset_to_use = 'train'  # 'train' or 'val'
+    target_for_SHAP_calc = 'bg' # 'bg' or 'latent'
+    which_latent_dim = 10  # Only used if target_for_SHAP_calc is 'latent'
+    which_dataset_to_use = 'val'  # 'train' or 'val'
     rename_columns = None
     load_data = False
     data_filename = 'shapley_vals_for_bg_pred_using_fold2_val.csv'
@@ -194,16 +194,22 @@ if __name__ == "__main__":
                 loaded_model.eval()
                 with torch.no_grad():
                     train_tensors = torch.from_numpy(train_dataset_df.values).to(dtype=torch.float32)
-                    ae_out = loaded_model(train_tensors)
-                    train_latents = ae_out['z']
+                    for i, layer in enumerate(loaded_model.ae_modules['encoder']):
+                        if i == 0:
+                            train_latents = layer(train_tensors)
+                        else:
+                            train_latents = layer(train_latents)
                 train_latents_df = pd.DataFrame(train_latents.numpy(), columns=[f'latent_{i+1}' for i in range(train_latents.shape[1])])
 
             if which_dataset_to_use == 'val':
                 loaded_model.eval()
                 with torch.no_grad():
                     val_tensors = torch.from_numpy(val_dataset_df.values).to(dtype=torch.float32)
-                    ae_out = loaded_model(val_tensors)
-                    val_latents = ae_out['z']
+                    for i, layer in enumerate(loaded_model.ae_modules['encoder']):
+                        if i == 0:
+                            val_latents = layer(val_tensors)
+                        else:
+                            val_latents = layer(val_latents)
                 val_latents_df = pd.DataFrame(val_latents.numpy(), columns=[f'latent_{i+1}' for i in range(val_latents.shape[1])])
 
         if target_for_SHAP_calc == 'bg':
@@ -307,17 +313,17 @@ if __name__ == "__main__":
 
     mean_abs_shapley_values, feats_for_plot = zip(*sorted(zip(mean_abs_shapley_values, shapley_values_df.columns), reverse=False))
 
-    fig, ax = plt.subplots(figsize=(4, 3))
+    fig, ax = plt.subplots(figsize=(4.3, 3))
     ax.barh(feats_for_plot, mean_abs_shapley_values, color='skyblue')
     ax.set_xlabel(r'$ \textrm{Mean} ( | \textrm{SHAP value} | )$')
     ax.set_ylabel(r'Feature')
-    ax.set_xticks(np.arange(min(mean_abs_shapley_values), max(mean_abs_shapley_values), 1.0))
-    # Label the horizontal bars with their values
-    for i, v in enumerate(mean_abs_shapley_values):
-        ax.text(v + 0.005, i, f"{v:.4f}", color='blue', va='center', fontsize=8)
-    # Remove the top and left frame lines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    ax.set_xticks(np.arange(min(mean_abs_shapley_values), max(mean_abs_shapley_values), 0.1))
+    # # Label the horizontal bars with their values
+    # for i, v in enumerate(mean_abs_shapley_values):
+    #     ax.text(v + 0.005, i, f"{v:.4f}", color='blue', va='center', fontsize=8)
+    # # Remove the top and left frame lines
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['right'].set_visible(False)
     plt.tight_layout()
     if target_for_SHAP_calc == 'latent':
         plt.savefig(f'shapley_vals_for_l{which_latent_dim}_pred_using_fold{fold_num}_{which_dataset_to_use}.pdf', bbox_inches='tight', dpi=300)

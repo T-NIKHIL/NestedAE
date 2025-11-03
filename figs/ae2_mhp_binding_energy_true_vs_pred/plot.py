@@ -104,7 +104,7 @@ if __name__ == "__main__":
   # Dataset Parameters
   #################################################################
 
-  dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/nestedae_dataset/perov_solv_BE_for_nestedae.csv'
+  dataset_loc = '../../datasets/MHP_bandgaps_AND_perov_solvent_BE/perov_solv_BE_for_nestedae.csv'
   descriptors = ['SOLV_DENSITY',
                   'SOLV_DIELECTRIC',
                   'SOLV_GDN',
@@ -196,8 +196,8 @@ if __name__ == "__main__":
 
   # Scatter plot true and predicted bandgaps
   fig, ax = plt.subplots(1, 1, figsize=(3.0, 3.0))
-  ax.scatter(be_true_train, be_pred_train, alpha=1.0, s=5, label='Train', c='blue')
-  ax.scatter(be_true_val, be_pred_val, alpha=1.0, s=5, label='Validation', c='orange')
+  # ax.scatter(be_true_train, be_pred_train, alpha=1.0, s=5, label='Train', c='blue')
+  ax.scatter(be_true_val, be_pred_val, alpha=1.0, s=10, label='Validation', c='orange')
   ax.set_xlabel(r'True Binding Energy (kJ/mol)')
   ax.set_ylabel(r'Predicted Binding Energy (kJ/mol)')
   ax.plot([be_true.min(), be_true.max()], [be_true.min(), be_true.max()], 'r--', lw=1)
@@ -206,13 +206,13 @@ if __name__ == "__main__":
   # Insert text box to the lower right hand corner
   # Remove frame for text box
   ax.text(0.42, 0.13,
-            f'Train MAE: {np.mean(np.abs(be_pred_train.detach().numpy().squeeze() - be_true_train)):.2f} kJ/mol \n \
-              Val. MAE: {np.mean(np.abs(be_pred_val.detach().numpy().squeeze() - be_true_val)):.2f} kJ/mol',
+            f'Test MAE: {np.mean(np.abs(be_pred_val.detach().numpy().squeeze() - be_true_val)):.2f} kJ/mol \n \
+              Test RMSE: {np.sqrt(np.mean((be_pred_val.detach().numpy().squeeze() - be_true_val)**2)):.2f} kJ/mol',
             transform=ax.transAxes,
             fontsize=8,
             verticalalignment='top',
             bbox=dict(boxstyle='round', facecolor='white', alpha=0.5, edgecolor='none'))
-  ax.legend(frameon=False, fontsize=8)
+  # ax.legend(frameon=False, fontsize=8)
   ax.set_aspect('equal', 'box')
   ax.set_xticks(np.arange(5, 45, 5))
   ax.set_yticks(np.arange(5, 45, 5))

@@ -1,0 +1,93 @@
+Models tested for predicting MHP-solvent binding energy : LASSO, Ridge Regression, Support Vector Regressor, XGBoost Regressor, Gaussian Process Regressor, Random Forest
+
+Dataset used : 'datasets/MHP_bandgaps_AND_perov_solvent_BE/nestedae_dataset/perov_bandgaps_PBE_arun_reduced.csv'
+
+descriptors = ['A_IONRAD',
+               'A_MASS',
+               'A_DPM',
+               'B_IONRAD',
+               'B_MASS',
+               'B_EA',
+               'B_IE',
+               'B_En',
+               'B_AN',
+               'X_IONRAD',
+               'X_MASS',
+               'X_EA',
+               'X_IE',
+               'X_En',
+               'X_AN'
+]
+target = ['Gap']
+
+Best performing model parameters 
+found through
+
+grid = GridSearchCV(estimator=XGBRegressor(random_state=random_state),
+                    param_grid=param_grid_xgb,
+                    scoring='neg_mean_absolute_error', 
+                    cv=split_idxs_all_folds, # If using None defaults to 5 fold cross-validation
+                    n_jobs=-1, 
+                    verbose=1,
+                    return_train_score=True)
+
+-----------------------------------------------------------------
+
+XGBoost:
+
+param_grid_xgb = {
+        'n_estimators': [250, 500, 1000, 2000],
+        'learning_rate': [0.01, 0.05, 0.1],
+        'max_depth': [2, 3, 4, 5],
+        'subsample': [0.4, 0.6, 0.8, 1.0],
+    }
+
+Best performing model = {'learning_rate': 0.01, 'max_depth': 5, 'n_estimators': 2000, 'subsample': 0.4}
+
+-----------------------------------------------------------------
+
+Random Forest Regressor :
+
+param_grid_RF = {
+    'n_estimators': [100, 200, 500, 1000],
+    'max_depth': [2, 3, 4, 5, 10],
+    'ccp_alpha': [0.0, 0.01, 0.1]
+}
+
+Best performing model = {'ccp_alpha': 0.0, 'max_depth': 10, 'n_estimators': 500}
+
+-----------------------------------------------------------------
+
+Nu Support Vector Regression :
+
+param_grid_nusvr = {
+    'nu': [0.25, 0.5, 0.75],
+    'kernel': ['rbf', 'linear', 'poly', 'sigmoid'],
+    'degree': [2, 3, 4],  # Only relevant for 'poly' kernel
+    'coef0': [0.0, 0.1, 0.5],  # Only relevant for 'poly' and 'sigmoid' kernels
+    'C': [0.5, 1, 5, 10, 50, 100]
+}
+
+Best performing model = {'C': 5, 'coef0': 0.5, 'degree': 3, 'kernel': 'poly', 'nu': 0.75}
+
+------------------------------------------------------------------
+
+LASSO :
+
+param_grid_lasso = {
+        'alpha':[0.0001, 0.001, 0.01, 0.1, 1.0]
+}
+
+Best performing model = {'alpha': 0.0001}
+
+-----------------------------------------------------------------
+
+Ridge Regression : 
+
+param_grid_ridge = {
+          'alpha':[0.0001, 0.001, 0.01, 0.1, 1.0]
+}
+
+Best performing model = {'alpha': 0.1}
+
+ 
